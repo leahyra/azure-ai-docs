@@ -3,7 +3,7 @@ title: Supported Regions
 description: Learn about the regions that offer Azure AI Search and the features available in each region.
 author: mattwojo
 ms.author: mattwoj
-ms.date: 08/24/2026
+ms.date: 09/23/2026
 ms.service: azure-ai-search
 ms.topic: concept-article
 ai-usage: ai-assisted
@@ -17,6 +17,43 @@ ms.custom:
 [!INCLUDE [search-fiq-banner](./includes/search-fiq-banner.md)]
 
 This article identifies the cloud regions in which Azure AI Search is available. It also lists which premium features are available in each region.
+
+## Discover regional offerings with the management REST API (preview)
+
+To check which Azure AI Search features and SKUs are offered in each region,
+call Fetch Offerings with the `2026-09-01-preview` **management** API version.
+Use a Microsoft Entra
+token for Azure Resource Manager and an identity permitted to invoke
+`Microsoft.Search/fetchOfferings/action`. For management authentication
+guidance, see [Manage your service using REST APIs](search-manage-rest.md#prerequisites).
+The operation has no subscription ID in its URL and requires no request body.
+The `--subscription` option selects your Azure CLI authentication context;
+it doesn't scope the operation's URL. After signing in to Azure CLI, replace
+the subscription ID and run:
+
+```powershell
+$uri = "https://management.azure.com/providers/Microsoft.Search/"
+$uri += "fetchOfferings?api-version=2026-09-01-preview"
+az rest --method post --url $uri --subscription "YOUR-SUBSCRIPTION-ID"
+```
+
+Reference: [Fetch Offerings](/rest/api/searchmanagement/offerings/fetch?view=rest-searchmanagement-2026-09-01-preview&preserve-view=true).
+
+The response contains a `regions` array with each region's `regionName`,
+`features`, and `skus`. Use the `defaultRegion` value, when present and not
+null, as a **recommendation** for where to create a service. If it's null or
+absent, select a region that meets your feature, SKU, and data residency
+requirements. Check current [regional availability](#features-subject-to-regional-availability)
+and [capacity constraints](search-region-capacity.md) before creating a
+service. A recommended region doesn't reserve capacity or guarantee that
+your selected SKU is available when you create the service.
+
+The earlier `2025-02-01-preview` and `2026-03-01-preview` management API
+versions use [List Offerings](/rest/api/searchmanagement/offerings/list?view=rest-searchmanagement-2025-02-01-preview&preserve-view=true):
+`GET /providers/Microsoft.Search/offerings`. Those responses contain a
+`value` array rather than the `regions` and `defaultRegion` fields returned
+by Fetch Offerings. This management API version doesn't change the version
+you use for search index, query, or other data-plane operations.
 
 ## Features subject to regional availability
 

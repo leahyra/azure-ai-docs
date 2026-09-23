@@ -1,7 +1,7 @@
 ---
 title: What's New
 description: Stay up to date with the latest Azure AI Search features, updates, and announcements. Discover new capabilities for search, vector, and AI-powered retrieval.
-ms.date: 08/25/2026
+ms.date: 09/23/2026
 ms.service: azure-ai-search
 ms.topic: whats-new
 ms.custom:
@@ -20,6 +20,17 @@ ai-usage: ai-assisted
 [!INCLUDE [preview-terms](./includes/previews/preview-terms.md)]
 
 Learn about the latest updates to Azure AI Search functionality, documentation, and samples.
+
+## September 2026
+
+The following preview updates use the **management** API version
+`2026-09-01-preview`. They don't change the API version used for search
+indexing, queries, or other data-plane operations.
+
+| Item | Description |
+|--|--|
+| [Search Management 2026-09-01-preview](/rest/api/searchmanagement/operation-groups?view=rest-searchmanagement-2026-09-01-preview&preserve-view=true) | Preview REST API version for the control-plane operations described in this table. |
+| [Discover regional offerings](search-region-support.md#discover-regional-offerings-with-the-management-rest-api-preview) (preview) | Fetch the features and SKUs offered in each region with the new `fetchOfferings` management operation. Its `defaultRegion` value recommends a region for new services when available; if it's null, choose a region that meets your requirements. Earlier preview versions retain the `offerings` list operation. |
 
 ## August 2026
 
