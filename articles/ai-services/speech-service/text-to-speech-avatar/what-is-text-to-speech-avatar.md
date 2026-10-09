@@ -97,7 +97,7 @@ Sample code for text to speech avatar is available on [GitHub](https://github.co
 
 ## Agent Skills
 
-Use skills with your AI coding agent to accelerate text to speech avatar integration into your application. To get started, see [GitHub](https://github.com/microsoft-foundry/voicelive-samples/tree/main/skills/azure-avatar-integrate).
+Use skills with your AI coding agent to accelerate text-to-speech avatar integration into your application. To get started, see [GitHub](https://github.com/microsoft-foundry/voicelive-samples/tree/main/skills/azure-avatar-integrate).
 
 ## Pricing
 
