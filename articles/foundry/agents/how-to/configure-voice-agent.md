@@ -6,7 +6,7 @@ ms.author: sgilley
 ms.service: microsoft-foundry
 ms.subservice: foundry-agent-service
 ms.topic: how-to
-ms.date: 10/07/2026
+ms.date: 10/10/2026
 ms.custom: preview
 ai-usage: ai-assisted
 zone_pivot_groups: voice-agent-config-method
@@ -31,6 +31,7 @@ This article shows you how to set each part of that definition. Every **create**
 - A voice model that's available to your project. Use a service-managed model such as `gpt-realtime`, or your own Foundry model deployment. This corresponds to `modelType: managed` or, where supported, `modelType: self_deployed` with a bring-your-own-model (BYOM) deployment.
 - A client that supports the audio input and output formats you configure.
 - A microphone to test a live conversation in the playground.
+- To attach a toolbox, an existing [toolbox](tools/toolbox.md) and its immutable version in the same Foundry project.
 
 ::: zone pivot="python"
 
@@ -423,6 +424,31 @@ Reference: [Azure AI Projects client library for Python](https://aka.ms/azsdk/az
 
 This example registers the function schema. Your realtime client must implement `get_order_status` and return its result when the agent calls it.
 
+### Attach a toolbox
+
+Use `VoiceAgentToolboxTool` to attach an existing toolbox version. Replace `<toolbox-name>` and `<toolbox-version>` with the name and immutable version of a toolbox in your project.
+
+```python
+from azure.ai.projects.models import VoiceAgentToolboxTool
+
+definition.tools = [
+    VoiceAgentToolboxTool(
+        toolbox_name="<toolbox-name>",
+        toolbox_version="<toolbox-version>",
+        response_scheduling="when_idle",
+    ),
+]
+```
+
+Reference: [Voice agent tools Python sample](https://github.com/microsoft-foundry/foundry-samples/blob/main/samples/python/voice-agents/voice_agent_with_tools.py).
+
+This example replaces the individual tool list with the toolbox. Continue with [Save and test the agent](#save-and-test-the-agent), then make a request that uses one of the toolbox's tools.
+
+> [!IMPORTANT]
+> To reduce latency when you use a toolbox, test your voice agent without tool search first. Exposing the toolbox's tools directly to the model avoids an extra discovery step. Use [tool search](tools/tool-search.md) primarily for larger toolboxes with more than 10–15 tools.
+
+Configure tool search on the toolbox version, not on the voice-agent toolbox reference.
+
 ## Cover tool latency with interim responses
 
 Silence during a tool call sounds like a dropped call. By using `interim_response`, the agent can speak while it waits.
@@ -753,6 +779,31 @@ definition.Tools.Add(new VoiceAgentEndConversationSystemTool());
 Reference: [VoiceAgentFunctionTool](https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/ai/Azure.AI.Projects.Agents/src/Generated/Models/VoiceAgentFunctionTool.cs), [ModelReaderWriter.Read](/dotnet/api/system.clientmodel.primitives.modelreaderwriter.read).
 
 This example registers the function schema. Your realtime client must implement `get_order_status` and return its result when the agent calls it.
+
+### Attach a toolbox
+
+Use `VoiceAgentToolboxTool` to attach an existing toolbox version. Replace `<toolbox-name>` and `<toolbox-version>` with the name and immutable version of a toolbox in your project.
+
+```csharp
+using Azure.AI.Projects.Agents;
+
+definition.Tools.Clear();
+definition.Tools.Add(new VoiceAgentToolboxTool(
+    toolboxName: "<toolbox-name>",
+    toolboxVersion: "<toolbox-version>")
+{
+    ResponseScheduling = VoiceAgentToolResponseScheduling.WhenIdle,
+});
+```
+
+Reference: [VoiceAgentToolboxTool](https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/ai/Azure.AI.Projects.Agents/src/Generated/Models/VoiceAgentToolboxTool.cs).
+
+This example replaces the individual tool list with the toolbox. Continue with [Save and test the agent](#save-and-test-the-agent), then make a request that uses one of the toolbox's tools.
+
+> [!IMPORTANT]
+> To reduce latency when you use a toolbox, test your voice agent without tool search first. Exposing the toolbox's tools directly to the model avoids an extra discovery step. Use [tool search](tools/tool-search.md) primarily for larger toolboxes with more than 10–15 tools.
+
+Configure tool search on the toolbox version, not on the voice-agent toolbox reference.
 
 ## Cover tool latency with interim responses
 
@@ -1085,6 +1136,30 @@ Reference: [Realtime text and tools JavaScript sample](https://github.com/micros
 
 This example registers the function schema. Your realtime client must implement `get_order_status` and return its result when the agent calls it.
 
+### Attach a toolbox
+
+Add a tool with `type: "toolbox"` to attach an existing toolbox version. Replace `<toolbox-name>` and `<toolbox-version>` with the name and immutable version of a toolbox in your project.
+
+```javascript
+definition.tools = [
+    {
+        type: "toolbox",
+        toolbox_name: "<toolbox-name>",
+        toolbox_version: "<toolbox-version>",
+        response_scheduling: "when_idle",
+    },
+];
+```
+
+Reference: [VoiceAgentToolboxTool interface](https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/ai/ai-projects/src/models/models.ts).
+
+This example replaces the individual tool list with the toolbox. Continue with [Save and test the agent](#save-and-test-the-agent), then make a request that uses one of the toolbox's tools.
+
+> [!IMPORTANT]
+> To reduce latency when you use a toolbox, test your voice agent without tool search first. Exposing the toolbox's tools directly to the model avoids an extra discovery step. Use [tool search](tools/tool-search.md) primarily for larger toolboxes with more than 10–15 tools.
+
+Configure tool search on the toolbox version, not on the voice-agent toolbox reference.
+
 ## Cover tool latency with interim responses
 
 Silence during a tool call sounds like a dropped call. By using `interim_response`, the agent can speak while it waits.
@@ -1281,6 +1356,29 @@ The following example configures these behaviors:
 The audio format must match the format that your client sends and receives. Support for advanced settings and combinations can vary by model.
 
 For more information about audio formats and turn detection, see [How to use the Voice Live API](/azure/ai-services/speech-service/voice-live-how-to).
+
+### Attach a toolbox
+
+Replace the `tools` list in the voice agent service with a toolbox reference. Replace `<toolbox-name>` and `<toolbox-version>` with the name and immutable version of a toolbox in your project.
+
+```yaml
+tools:
+  - type: toolbox
+    toolbox_name: <toolbox-name>
+    toolbox_version: "<toolbox-version>"
+    response_scheduling: when_idle
+```
+
+Reference: [Voice agent service schema](https://github.com/Azure/azure-dev/blob/main/cli/azd/extensions/azure.ai.agents/schemas/azure.ai.agent.json).
+
+Use `tools` with `type: toolbox`; the top-level `toolbox` property isn't supported for voice agents. Keep the field names inside the tool entry in snake case, as shown.
+
+This example replaces the individual tool list with the toolbox and schedules responses when the conversation is idle. Continue with [Deploy the updated agent](#deploy-the-updated-agent), then test a request that uses one of the toolbox's tools.
+
+> [!IMPORTANT]
+> To reduce latency when you use a toolbox, test your voice agent without tool search first. Exposing the toolbox's tools directly to the model avoids an extra discovery step. Use [tool search](tools/tool-search.md) primarily for larger toolboxes with more than 10–15 tools.
+
+Configure tool search on the toolbox version, not on the voice-agent toolbox reference.
 
 ### Add a telephony binding
 
@@ -1631,6 +1729,11 @@ A toolbox is a reusable, versioned collection of tools and policies presented th
 
 <!-- Screenshot: Tools section with an attached toolbox and the Add a MCP tool and Add a toolbox actions. -->
 
+> [!IMPORTANT]
+> To reduce latency when you use a toolbox, test your voice agent without tool search first. Exposing the toolbox's tools directly to the model avoids an extra discovery step. Use [tool search](tools/tool-search.md) primarily for larger toolboxes with more than 10–15 tools.
+
+Configure tool search on the toolbox version, not on the voice-agent toolbox reference.
+
 Use a toolbox when:
 
 - Multiple agents should share the same governed capabilities.
@@ -1662,7 +1765,7 @@ The following example adds an Azure AI Search index so the agent can retrieve in
 1. Select an existing **Azure AI Search connection**. If none is available, select **Connect to new resource** and create the project connection.
 1. Select one search index from the list. The list shows each index name and its available fields. If necessary, select **Create a new index** first.
 1. Select **Add**.
-1. If the toolbox contains many capabilities, turn on **Tool search**. Tool search lets the agent find the relevant tool during execution instead of placing every tool definition in the model input.
+1. Choose whether to turn on **Tool search**. This option lets the agent discover relevant tools during execution instead of including every tool definition in the model input.
 1. Review any toolbox guardrail policy, and then select **Publish**.
 
 You need at least one tool or skill before you can publish the toolbox. The toolbox creation flow uses project permissions; a user without permission to create or update toolboxes must ask an administrator for the **Foundry User** role.
