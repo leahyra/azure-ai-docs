@@ -1357,7 +1357,11 @@ The audio format must match the format that your client sends and receives. Supp
 
 For more information about audio formats and turn detection, see [How to use the Voice Live API](/azure/ai-services/speech-service/voice-live-how-to).
 
-### Attach a toolbox
+### Attach tools
+
+Use the `tools` list to configure the tools available to your voice agent.
+
+#### Attach a toolbox
 
 Replace the `tools` list in the voice agent service with a toolbox reference. Replace `<toolbox-name>` and `<toolbox-version>` with the name and immutable version of a toolbox in your project.
 
