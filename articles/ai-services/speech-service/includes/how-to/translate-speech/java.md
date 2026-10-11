@@ -2,9 +2,10 @@
 author: PatrickFarley
 ms.service: azure-speech-foundry-tools
 ms.topic: include
-ms.date: 1/21/2024
+ms.date: 10/06/2026
 ms.custom: devx-track-java
 ms.author: pafarley
+ai-usage: ai-assisted
 ---
 
 [!INCLUDE [Header](../../common/java.md)]
@@ -415,8 +416,193 @@ TranslationRecognizer translationRecognizer =
 
 For a complete code sample, see [language identification](../../../language-identification.md?pivots=programming-language-java#run-speech-translation).
 
+## Use Live Interpreter for real-time speech-to-speech translation with personal voice
+
+Live Interpreter continuously identifies the language being spoken without requiring you to set an input language. It delivers low-latency speech-to-speech translation in a natural voice that preserves the speaker's style and tone.
+
+To use the Live Interpreter API, first [apply for personal voice access](https://aka.ms/customneural) and select **Personal Voice** for Question 20. For the resource ID, use a resource in a region that supports Live Interpreter. See the [Speech service regions table](../../../regions.md?tabs=speech-translation) for current regional availability.
+
+Before you run the sample, set these environment variables:
+
+- `SPEECH_KEY`: Your Speech resource key.
+- `SPEECH_ENDPOINT`: The universal v2 endpoint, such as `wss://<resource-name>.cognitiveservices.azure.com/stt/speech/universal/v2`.
+- `LIVE_INTERPRETER_AUDIO_FILE`: The path to a WAV audio file.
+
+After personal voice access is granted, enable Live Interpreter with the following code:
+
+```java
+import java.net.URI;
+
+import com.microsoft.cognitiveservices.speech.AutoDetectSourceLanguageConfig;
+import com.microsoft.cognitiveservices.speech.translation.SpeechTranslationConfig;
+
+String speechKey = System.getenv("SPEECH_KEY");
+String endpoint = System.getenv("SPEECH_ENDPOINT");
+
+SpeechTranslationConfig translationConfig =
+    SpeechTranslationConfig.fromEndpoint(URI.create(endpoint), speechKey);
+translationConfig.addTargetLanguage("zh-Hans");
+translationConfig.setVoiceName("personal-voice");
+
+// You don't need to define any candidate languages to detect.
+AutoDetectSourceLanguageConfig autoDetectSourceLanguageConfig =
+    AutoDetectSourceLanguageConfig.fromOpenRange();
+```
+
+Reference: [`SpeechTranslationConfig`][speechtranslationconfig] and [`AutoDetectSourceLanguageConfig`][autodetectsourcelanguageconfig].
+
+The following complete example translates a WAV file and writes each synthesized audio result to a separate WAV file:
+
+```java
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.URI;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+
+import com.microsoft.cognitiveservices.speech.AutoDetectSourceLanguageConfig;
+import com.microsoft.cognitiveservices.speech.CancellationReason;
+import com.microsoft.cognitiveservices.speech.PropertyId;
+import com.microsoft.cognitiveservices.speech.ResultReason;
+import com.microsoft.cognitiveservices.speech.audio.AudioConfig;
+import com.microsoft.cognitiveservices.speech.translation.TranslationRecognitionResult;
+import com.microsoft.cognitiveservices.speech.translation.SpeechTranslationConfig;
+import com.microsoft.cognitiveservices.speech.translation.TranslationRecognizer;
+
+public class LiveInterpreter {
+    private static String getRequiredEnvironmentVariable(String name) {
+        String value = System.getenv(name);
+        if (value == null || value.isEmpty()) {
+            throw new IllegalStateException(
+                "Missing environment variable: " + name);
+        }
+        return value;
+    }
+
+    public static void main(String[] args) throws Exception {
+        String speechKey = getRequiredEnvironmentVariable("SPEECH_KEY");
+        String endpoint = getRequiredEnvironmentVariable("SPEECH_ENDPOINT");
+        String audioFile = getRequiredEnvironmentVariable(
+            "LIVE_INTERPRETER_AUDIO_FILE");
+        String targetLanguage = "zh-Hans";
+
+        CountDownLatch recognitionStopped = new CountDownLatch(1);
+        AtomicInteger audioIndex = new AtomicInteger();
+        AtomicReference<String> failure = new AtomicReference<>();
+
+        try (SpeechTranslationConfig translationConfig =
+                SpeechTranslationConfig.fromEndpoint(
+                    URI.create(endpoint), speechKey);
+            AutoDetectSourceLanguageConfig autoDetectConfig =
+                AutoDetectSourceLanguageConfig.fromOpenRange();
+            AudioConfig audioConfig =
+                AudioConfig.fromWavFileInput(audioFile)) {
+            translationConfig.addTargetLanguage(targetLanguage);
+            translationConfig.setVoiceName("personal-voice");
+
+            try (TranslationRecognizer recognizer =
+                new TranslationRecognizer(
+                    translationConfig,
+                    autoDetectConfig,
+                    audioConfig)) {
+
+                recognizer.recognizing.addEventListener((sender, event) -> {
+                    TranslationRecognitionResult result = event.getResult();
+                    System.out.printf("RECOGNIZING: %s%n", result.getText());
+                    for (Map.Entry<String, String> translation :
+                        result.getTranslations().entrySet()) {
+                        System.out.printf(
+                            "    TRANSLATING into '%s': %s%n",
+                            translation.getKey(),
+                            translation.getValue());
+                    }
+                });
+
+                recognizer.recognized.addEventListener((sender, event) -> {
+                    TranslationRecognitionResult result = event.getResult();
+                    if (result.getReason() != ResultReason.TranslatedSpeech) {
+                        return;
+                    }
+
+                    String sourceLanguage =
+                        result.getProperties().getProperty(
+                            PropertyId
+                                .SpeechServiceConnection_AutoDetectSourceLanguageResult);
+                    System.out.printf(
+                        "RECOGNIZED in '%s': %s%n",
+                        sourceLanguage,
+                        result.getText());
+                    for (Map.Entry<String, String> translation :
+                        result.getTranslations().entrySet()) {
+                        System.out.printf(
+                            "    TRANSLATED into '%s': %s%n",
+                            translation.getKey(),
+                            translation.getValue());
+                    }
+                });
+
+                recognizer.synthesizing.addEventListener(
+                    (sender, event) -> {
+                        byte[] audio = event.getResult().getAudio();
+                        System.out.printf(
+                            "Audio synthesized: %d byte(s)%n",
+                            audio.length);
+                        if (audio.length == 0) {
+                            recognitionStopped.countDown();
+                            return;
+                        }
+
+                        String outputFile = String.format(
+                            "translation-%d.wav",
+                            audioIndex.incrementAndGet());
+                        try (FileOutputStream output =
+                            new FileOutputStream(outputFile)) {
+                            output.write(audio);
+                        } catch (IOException error) {
+                            failure.compareAndSet(
+                                null,
+                                "Couldn't write " + outputFile + ": "
+                                    + error.getMessage());
+                            recognitionStopped.countDown();
+                        }
+                    });
+
+                recognizer.canceled.addEventListener((sender, event) -> {
+                    System.out.println(
+                        "CANCELED: Reason=" + event.getReason());
+                    if (event.getReason() == CancellationReason.Error) {
+                        String message =
+                            "CANCELED: ErrorCode="
+                                + event.getErrorCode()
+                                + ", ErrorDetails="
+                                + event.getErrorDetails();
+                        System.err.println(message);
+                        failure.compareAndSet(null, message);
+                    }
+                    recognitionStopped.countDown();
+                });
+
+                System.out.println("Start translation...");
+                recognizer.startContinuousRecognitionAsync().get();
+                recognitionStopped.await();
+                recognizer.stopContinuousRecognitionAsync().get();
+            }
+        }
+
+        if (failure.get() != null) {
+            throw new IllegalStateException(failure.get());
+        }
+    }
+}
+```
+
+Reference: [`AudioConfig`][audioconfig], [`AutoDetectSourceLanguageConfig`][autodetectsourcelanguageconfig], and [`TranslationRecognizer`][translationrecognizer].
+
 [speechtranslationconfig]: /java/api/com.microsoft.cognitiveservices.speech.translation.SpeechTranslationConfig
 [audioconfig]: /java/api/com.microsoft.cognitiveservices.speech.audio.AudioConfig
+[autodetectsourcelanguageconfig]: /java/api/com.microsoft.cognitiveservices.speech.autodetectsourcelanguageconfig
 [translationrecognizer]: /java/api/com.microsoft.cognitiveservices.speech.translation.TranslationRecognizer
 [recognitionlang]: /java/api/com.microsoft.cognitiveservices.speech.speechconfig.setspeechrecognitionlanguage
 [addlang]: /java/api/com.microsoft.cognitiveservices.speech.translation.speechtranslationconfig.addtargetlanguage
