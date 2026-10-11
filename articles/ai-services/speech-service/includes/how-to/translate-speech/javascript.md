@@ -2,7 +2,7 @@
 author: PatrickFarley
 ms.service: azure-speech-foundry-tools
 ms.topic: include
-ms.date: 1/29/2026
+ms.date: 10/07/2026
 ms.author: pafarley
 ms.custom: devx-track-js
 ai-usage: ai-assisted
@@ -346,3 +346,190 @@ const translationRecognizer = TranslationRecognizer.FromConfig(speechTranslation
 ```
 
 For a complete code sample, see [language identification](../../../language-identification.md?pivots=programming-language-javascript#run-speech-translation).
+
+## Use Live Interpreter for real-time speech-to-speech translation with personal voice
+
+Live Interpreter continuously identifies the language being spoken without requiring you to set an input language. It delivers low-latency speech-to-speech translation in a natural voice that preserves the speaker's style and tone.
+
+To use the Live Interpreter API, first [apply for personal voice access](https://aka.ms/customneural) and select **Personal Voice** for Question 20. For the resource ID, use a resource in a region that supports Live Interpreter. See the [Speech service regions table](../../../regions.md?tabs=speech-translation) for current regional availability.
+
+Before you run the sample, set these environment variables:
+
+- `SPEECH_KEY`: Your Speech resource key.
+- `SPEECH_ENDPOINT`: The universal v2 endpoint, such as `wss://<resource-name>.cognitiveservices.azure.com/stt/speech/universal/v2`.
+- `LIVE_INTERPRETER_AUDIO_FILE`: The path to a WAV audio file.
+
+After personal voice access is granted, enable Live Interpreter with the following code:
+
+```javascript
+const sdk = require("microsoft-cognitiveservices-speech-sdk");
+
+const speechKey = process.env.SPEECH_KEY;
+const endpoint = process.env.SPEECH_ENDPOINT;
+
+const translationConfig = sdk.SpeechTranslationConfig.fromEndpoint(
+    new URL(endpoint),
+    speechKey
+);
+translationConfig.addTargetLanguage("zh-Hans");
+translationConfig.voiceName = "personal-voice";
+
+// You don't need to define any candidate languages to detect.
+const autoDetectSourceLanguageConfig =
+    sdk.AutoDetectSourceLanguageConfig.fromOpenRange();
+```
+
+Reference: [`SpeechTranslationConfig`][speechtranslationconfig] and [`AutoDetectSourceLanguageConfig`][autodetectsourcelanguageconfig].
+
+The following complete example translates a WAV file and writes each synthesized audio result to a separate WAV file:
+
+```javascript
+const fs = require("fs");
+const sdk = require("microsoft-cognitiveservices-speech-sdk");
+
+function getRequiredEnvironmentVariable(name) {
+    const value = process.env[name];
+    if (!value) {
+        throw new Error(`Missing environment variable: ${name}`);
+    }
+    return value;
+}
+
+async function main() {
+    const speechKey = getRequiredEnvironmentVariable("SPEECH_KEY");
+    const endpoint = getRequiredEnvironmentVariable("SPEECH_ENDPOINT");
+    const audioFile = getRequiredEnvironmentVariable(
+        "LIVE_INTERPRETER_AUDIO_FILE"
+    );
+    const targetLanguage = "zh-Hans";
+
+    const translationConfig = sdk.SpeechTranslationConfig.fromEndpoint(
+        new URL(endpoint),
+        speechKey
+    );
+    translationConfig.addTargetLanguage(targetLanguage);
+    translationConfig.voiceName = "personal-voice";
+
+    // You don't need to define any candidate languages to detect.
+    const autoDetectSourceLanguageConfig =
+        sdk.AutoDetectSourceLanguageConfig.fromOpenRange();
+    const audioConfig = sdk.AudioConfig.fromWavFileInput(
+        fs.readFileSync(audioFile),
+        audioFile
+    );
+    const recognizer = sdk.TranslationRecognizer.FromConfig(
+        translationConfig,
+        autoDetectSourceLanguageConfig,
+        audioConfig
+    );
+
+    let audioIndex = 0;
+
+    await new Promise((resolve, reject) => {
+        let finished = false;
+
+        const stopRecognition = (error) => {
+            if (finished) {
+                return;
+            }
+            finished = true;
+
+            recognizer.stopContinuousRecognitionAsync(
+                () => {
+                    recognizer.close();
+                    if (error) {
+                        reject(error);
+                    } else {
+                        resolve();
+                    }
+                },
+                stopError => {
+                    recognizer.close();
+                    reject(error || new Error(stopError));
+                }
+            );
+        };
+
+        const logTranslations = (label, result) => {
+            console.log(
+                `${label} in '${result.language}': ${result.text}`
+            );
+            for (const language of result.translations.languages) {
+                console.log(
+                    `    ${label} into '${language}': ` +
+                    result.translations.get(language)
+                );
+            }
+        };
+
+        recognizer.recognizing = (sender, event) => {
+            logTranslations("TRANSLATING", event.result);
+        };
+
+        recognizer.recognized = (sender, event) => {
+            if (event.result.reason === sdk.ResultReason.TranslatedSpeech) {
+                logTranslations("TRANSLATED", event.result);
+            } else if (event.result.reason === sdk.ResultReason.NoMatch) {
+                console.log("NOMATCH: Speech couldn't be recognized.");
+            }
+        };
+
+        recognizer.synthesizing = (sender, event) => {
+            const audio = event.result.audio;
+            console.log(`Audio synthesized: ${audio.byteLength} byte(s)`);
+            if (audio.byteLength === 0) {
+                return;
+            }
+
+            const outputFile = `translation-${++audioIndex}.wav`;
+            try {
+                fs.writeFileSync(outputFile, Buffer.from(audio));
+            } catch (error) {
+                stopRecognition(error);
+            }
+        };
+
+        recognizer.canceled = (sender, event) => {
+            console.log(`CANCELED: Reason=${event.reason}`);
+            let error;
+            if (event.reason === sdk.CancellationReason.Error) {
+                error = new Error(
+                    `CANCELED: ErrorCode=${event.errorCode}, ` +
+                    `ErrorDetails=${event.errorDetails}`
+                );
+                console.error(error.message);
+            }
+            stopRecognition(error);
+        };
+
+        recognizer.sessionStopped = () => {
+            console.log("Session stopped.");
+            stopRecognition();
+        };
+
+        console.log("Start translation...");
+        recognizer.startContinuousRecognitionAsync(
+            () => console.log("Translation started."),
+            error => {
+                if (!finished) {
+                    finished = true;
+                    recognizer.close();
+                    reject(new Error(error));
+                }
+            }
+        );
+    });
+}
+
+main().catch(error => {
+    console.error(`Live Interpreter failed: ${error.message}`);
+    process.exitCode = 1;
+});
+```
+
+Reference: [`AudioConfig`][audioconfig], [`AutoDetectSourceLanguageConfig`][autodetectsourcelanguageconfig], and [`TranslationRecognizer`][translationrecognizer].
+
+[speechtranslationconfig]: /javascript/api/microsoft-cognitiveservices-speech-sdk/speechtranslationconfig
+[audioconfig]: /javascript/api/microsoft-cognitiveservices-speech-sdk/audioconfig
+[autodetectsourcelanguageconfig]: /javascript/api/microsoft-cognitiveservices-speech-sdk/autodetectsourcelanguageconfig
+[translationrecognizer]: /javascript/api/microsoft-cognitiveservices-speech-sdk/translationrecognizer

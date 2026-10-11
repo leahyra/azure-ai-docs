@@ -2,8 +2,9 @@
 author: PatrickFarley
 ms.service: azure-speech-foundry-tools
 ms.topic: include
-ms.date: 1/21/2024
+ms.date: 10/06/2026
 ms.author: pafarley
+ai-usage: ai-assisted
 ---
 
 [!INCLUDE [Header](../../common/python.md)]
@@ -376,8 +377,172 @@ In many scenarios, you might not know which input languages to specify. Using [l
 
 For a complete code sample, see [language identification](../../../language-identification.md?pivots=programming-language-python#run-speech-translation).
 
+## Use Live Interpreter for real-time speech-to-speech translation with personal voice
+
+Live Interpreter continuously identifies the language being spoken without requiring you to set an input language. It delivers low-latency speech-to-speech translation in a natural voice that preserves the speaker's style and tone.
+
+To use the Live Interpreter API, first [apply for personal voice access](https://aka.ms/customneural) and select **Personal Voice** for Question 20. For the resource ID, use a resource in a region that supports Live Interpreter. See the [Speech service regions table](../../../regions.md?tabs=speech-translation) for current regional availability.
+
+Before you run the sample, set these environment variables:
+
+- `SPEECH_KEY`: Your Speech resource key.
+- `SPEECH_ENDPOINT`: The universal v2 endpoint, such as `wss://<resource-name>.cognitiveservices.azure.com/stt/speech/universal/v2`.
+- `LIVE_INTERPRETER_AUDIO_FILE`: The path to a WAV audio file.
+
+After personal voice access is granted, enable Live Interpreter with the following code:
+
+Python doesn't expose a `FromOpenRange` method. Instead, create
+`AutoDetectSourceLanguageConfig` without specifying any source languages to
+enable open-range language detection.
+
+```python
+import os
+
+import azure.cognitiveservices.speech as speechsdk
+
+speech_key = os.environ["SPEECH_KEY"]
+endpoint = os.environ["SPEECH_ENDPOINT"]
+
+translation_config = speechsdk.translation.SpeechTranslationConfig(
+    subscription=speech_key,
+    endpoint=endpoint,
+)
+translation_config.add_target_language("zh-Hans")
+translation_config.voice_name = "personal-voice"
+
+# An empty configuration enables open-range language detection.
+auto_detect_config = (
+    speechsdk.languageconfig.AutoDetectSourceLanguageConfig()
+)
+```
+
+Reference: [`SpeechTranslationConfig`][speechtranslationconfig] and [`AutoDetectSourceLanguageConfig`][autodetectsourcelanguageconfig].
+
+The following complete example translates a WAV file and writes each synthesized audio result to a separate WAV file:
+
+```python
+import os
+import threading
+
+import azure.cognitiveservices.speech as speechsdk
+
+
+def main():
+    speech_key = os.environ["SPEECH_KEY"]
+    endpoint = os.environ["SPEECH_ENDPOINT"]
+    audio_file = os.environ["LIVE_INTERPRETER_AUDIO_FILE"]
+    target_language = "zh-Hans"
+
+    translation_config = speechsdk.translation.SpeechTranslationConfig(
+        subscription=speech_key,
+        endpoint=endpoint,
+    )
+    translation_config.add_target_language(target_language)
+    translation_config.voice_name = "personal-voice"
+
+    # An empty configuration enables open-range language detection.
+    auto_detect_config = (
+        speechsdk.languageconfig.AutoDetectSourceLanguageConfig()
+    )
+    audio_config = speechsdk.audio.AudioConfig(filename=audio_file)
+    recognizer = speechsdk.translation.TranslationRecognizer(
+        translation_config=translation_config,
+        auto_detect_source_language_config=auto_detect_config,
+        audio_config=audio_config,
+    )
+
+    recognition_stopped = threading.Event()
+    failures = []
+    audio_index = 0
+
+    def recognizing(event):
+        source_language = event.result.properties.get(
+            speechsdk.PropertyId
+            .SpeechServiceConnection_AutoDetectSourceLanguageResult
+        )
+        print(
+            f"RECOGNIZING in '{source_language}': "
+            f"{event.result.text}"
+        )
+        for language, translation in event.result.translations.items():
+            print(f"    TRANSLATING into '{language}': {translation}")
+
+    def recognized(event):
+        if event.result.reason == speechsdk.ResultReason.TranslatedSpeech:
+            source_language = event.result.properties.get(
+                speechsdk.PropertyId
+                .SpeechServiceConnection_AutoDetectSourceLanguageResult
+            )
+            print(
+                f"RECOGNIZED in '{source_language}': "
+                f"{event.result.text}"
+            )
+            for language, translation in (
+                event.result.translations.items()
+            ):
+                print(
+                    f"    TRANSLATED into '{language}': {translation}"
+                )
+        elif event.result.reason == speechsdk.ResultReason.NoMatch:
+            print("NOMATCH: Speech couldn't be recognized.")
+
+    def synthesizing(event):
+        nonlocal audio_index
+        audio = event.result.audio
+        print(f"Audio synthesized: {len(audio)} byte(s)")
+        if not audio:
+            return
+
+        audio_index += 1
+        output_file = f"translation-{audio_index}.wav"
+        try:
+            with open(output_file, "wb") as output:
+                output.write(audio)
+        except OSError as error:
+            failures.append(
+                f"Couldn't write {output_file}: {error}"
+            )
+            recognition_stopped.set()
+
+    def canceled(event):
+        print(f"CANCELED: Reason={event.reason}")
+        if event.reason == speechsdk.CancellationReason.Error:
+            message = (
+                f"CANCELED: ErrorCode={event.error_code}, "
+                f"ErrorDetails={event.error_details}"
+            )
+            print(message)
+            failures.append(message)
+        recognition_stopped.set()
+
+    def session_stopped(event):
+        print("Session stopped.")
+        recognition_stopped.set()
+
+    recognizer.recognizing.connect(recognizing)
+    recognizer.recognized.connect(recognized)
+    recognizer.synthesizing.connect(synthesizing)
+    recognizer.canceled.connect(canceled)
+    recognizer.session_stopped.connect(session_stopped)
+
+    print("Start translation...")
+    recognizer.start_continuous_recognition_async().get()
+    recognition_stopped.wait()
+    recognizer.stop_continuous_recognition_async().get()
+
+    if failures:
+        raise RuntimeError(failures[0])
+
+
+if __name__ == "__main__":
+    main()
+```
+
+Reference: [`AudioConfig`][audioconfig], [`AutoDetectSourceLanguageConfig`][autodetectsourcelanguageconfig], and [`TranslationRecognizer`][translationrecognizer].
+
 [speechtranslationconfig]: /python/api/azure-cognitiveservices-speech/azure.cognitiveservices.speech.translation.speechtranslationconfig
 [audioconfig]: /python/api/azure-cognitiveservices-speech/azure.cognitiveservices.speech.audio.audioconfig
+[autodetectsourcelanguageconfig]: /python/api/azure-cognitiveservices-speech/azure.cognitiveservices.speech.languageconfig.autodetectsourcelanguageconfig
 [translationrecognizer]: /python/api/azure-cognitiveservices-speech/azure.cognitiveservices.speech.translation.translationrecognizer
 [recognitionlang]: /python/api/azure-cognitiveservices-speech/azure.cognitiveservices.speech.speechconfig
 [addlang]: /python/api/azure-cognitiveservices-speech/azure.cognitiveservices.speech.translation.speechtranslationconfig#add-target-language-language--str-

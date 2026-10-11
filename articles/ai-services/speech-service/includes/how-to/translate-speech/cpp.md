@@ -2,7 +2,7 @@
 author: PatrickFarley
 ms.service: azure-speech-foundry-tools
 ms.topic: include
-ms.date: 1/29/2026
+ms.date: 10/06/2026
 ms.author: pafarley
 ai-usage: ai-assisted
 ---
@@ -389,8 +389,205 @@ auto translationRecognizer = TranslationRecognizer::FromConfig(speechTranslation
 
 For a complete code sample, see [language identification](../../../language-identification.md?pivots=programming-language-cpp#run-speech-translation).
 
+## Use Live Interpreter for real-time speech-to-speech translation with personal voice
+
+Live Interpreter continuously identifies the language being spoken without requiring you to set an input language. It delivers low-latency speech-to-speech translation in a natural voice that preserves the speaker's style and tone.
+
+To use the Live Interpreter API, first [apply for personal voice access](https://aka.ms/customneural) and select **Personal Voice** for Question 20. For the resource ID, use a resource in a region that supports Live Interpreter. See the [Speech service regions table](../../../regions.md?tabs=speech-translation) for current regional availability.
+
+Before you run the sample, set these environment variables:
+
+- `SPEECH_KEY`: Your Speech resource key.
+- `SPEECH_ENDPOINT`: The universal v2 endpoint, such as `wss://<resource-name>.cognitiveservices.azure.com/stt/speech/universal/v2`.
+- `LIVE_INTERPRETER_AUDIO_FILE`: The path to a WAV audio file.
+
+After personal voice access is granted, enable Live Interpreter with the following code:
+
+```cpp
+#include <cstdlib>
+#include <speechapi_cxx.h>
+
+using namespace Microsoft::CognitiveServices::Speech;
+using namespace Microsoft::CognitiveServices::Speech::Translation;
+
+auto speechKey = getenv("SPEECH_KEY");
+auto endpoint = getenv("SPEECH_ENDPOINT");
+
+auto translationConfig =
+    SpeechTranslationConfig::FromEndpoint(endpoint, speechKey);
+translationConfig->AddTargetLanguage("zh-Hans");
+translationConfig->SetVoiceName("personal-voice");
+
+// You don't need to define any candidate languages to detect.
+auto autoDetectSourceLanguageConfig =
+    AutoDetectSourceLanguageConfig::FromOpenRange();
+```
+
+Reference: [`SpeechTranslationConfig`][speechtranslationconfig] and [`AutoDetectSourceLanguageConfig`][autodetectsourcelanguageconfig].
+
+The following complete example translates a WAV file and writes each synthesized audio result to a separate WAV file:
+
+```cpp
+#include <atomic>
+#include <cstdlib>
+#include <fstream>
+#include <future>
+#include <iostream>
+#include <stdexcept>
+#include <string>
+#include <speechapi_cxx.h>
+
+using namespace Microsoft::CognitiveServices::Speech;
+using namespace Microsoft::CognitiveServices::Speech::Audio;
+using namespace Microsoft::CognitiveServices::Speech::Translation;
+
+std::string GetRequiredEnvironmentVariable(const char* name)
+{
+    std::string result;
+#ifdef _WIN32
+    char* value = nullptr;
+    size_t valueSize = 0;
+    _dupenv_s(&value, &valueSize, name);
+    result = value == nullptr ? "" : value;
+    std::free(value);
+#else
+    const auto value = std::getenv(name);
+    result = value == nullptr ? "" : value;
+#endif
+    if (result.empty())
+        throw std::runtime_error(
+            std::string("Missing environment variable: ") + name);
+    return result;
+}
+
+int main()
+{
+    try
+    {
+        const auto speechKey = GetRequiredEnvironmentVariable("SPEECH_KEY");
+        const auto endpoint = GetRequiredEnvironmentVariable(
+            "SPEECH_ENDPOINT");
+        const auto audioFile = GetRequiredEnvironmentVariable(
+            "LIVE_INTERPRETER_AUDIO_FILE");
+        const std::string targetLanguage = "zh-Hans";
+
+        auto translationConfig =
+            SpeechTranslationConfig::FromEndpoint(endpoint, speechKey);
+        translationConfig->AddTargetLanguage(targetLanguage);
+        translationConfig->SetVoiceName("personal-voice");
+
+        auto autoDetectSourceLanguageConfig =
+            AutoDetectSourceLanguageConfig::FromOpenRange();
+        auto audioConfig =
+            AudioConfig::FromWavFileInput(audioFile);
+        auto recognizer = TranslationRecognizer::FromConfig(
+            translationConfig,
+            autoDetectSourceLanguageConfig,
+            audioConfig);
+
+        std::promise<void> recognitionStopped;
+        std::atomic<bool> stopped(false);
+        std::atomic<bool> failed(false);
+        std::atomic<unsigned int> audioIndex(0);
+
+        const auto signalStop = [&] {
+            if (!stopped.exchange(true))
+                recognitionStopped.set_value();
+        };
+
+        recognizer->Recognizing.Connect(
+            [](const TranslationRecognitionEventArgs& event) {
+            std::cout << "RECOGNIZING: " << event.Result->Text << '\n';
+            for (const auto& translation : event.Result->Translations)
+            {
+                std::cout << "    TRANSLATING into '"
+                          << translation.first << "': "
+                          << translation.second << '\n';
+            }
+        });
+
+        recognizer->Recognized.Connect(
+            [](const TranslationRecognitionEventArgs& event) {
+            if (event.Result->Reason != ResultReason::TranslatedSpeech)
+                return;
+
+            const auto sourceLanguage =
+                event.Result->Properties.GetProperty(
+                    PropertyId::
+                        SpeechServiceConnection_AutoDetectSourceLanguageResult);
+            std::cout << "RECOGNIZED in '" << sourceLanguage
+                      << "': " << event.Result->Text << '\n';
+            for (const auto& translation : event.Result->Translations)
+                std::cout << "    TRANSLATED into '"
+                          << translation.first << "': "
+                          << translation.second << '\n';
+        });
+
+        recognizer->Synthesizing.Connect(
+            [&](const TranslationSynthesisEventArgs& event) {
+            const auto& audio = event.Result->Audio;
+            std::cout << "Audio synthesized: " << audio.size()
+                      << " byte(s)\n";
+            if (audio.empty())
+            {
+                signalStop();
+                return;
+            }
+
+            const auto outputFile =
+                "translation-" + std::to_string(++audioIndex) + ".wav";
+            std::ofstream output(outputFile, std::ios::binary);
+            output.write(
+                reinterpret_cast<const char*>(audio.data()),
+                static_cast<std::streamsize>(audio.size()));
+            if (!output)
+            {
+                std::cerr << "Couldn't write " << outputFile
+                          << '\n';
+                failed = true;
+                signalStop();
+            }
+        });
+
+        recognizer->Canceled.Connect(
+            [&](const TranslationRecognitionCanceledEventArgs& event) {
+            std::cout << "CANCELED: Reason="
+                      << static_cast<int>(event.Reason) << '\n';
+            if (event.Reason == CancellationReason::Error)
+            {
+                std::cerr << "CANCELED: ErrorCode="
+                          << static_cast<int>(event.ErrorCode)
+                          << '\n';
+                std::cerr << "CANCELED: ErrorDetails="
+                          << event.ErrorDetails << '\n';
+                failed = true;
+            }
+            signalStop();
+        });
+
+        std::cout << "Start translation...\n";
+        recognizer->StartContinuousRecognitionAsync().get();
+        recognitionStopped.get_future().wait();
+        recognizer->StopContinuousRecognitionAsync().get();
+
+        if (failed)
+            return 1;
+    }
+    catch (const std::exception& error)
+    {
+        std::cerr << "Live Interpreter failed: " << error.what() << '\n';
+        return 1;
+    }
+
+    return 0;
+}
+```
+
+Reference: [`AudioConfig`][audioconfig], [`AutoDetectSourceLanguageConfig`][autodetectsourcelanguageconfig], and [`TranslationRecognizer`][translationrecognizer].
+
 [speechtranslationconfig]: /cpp/cognitive-services/speech/translation-speechtranslationconfig
 [audioconfig]: /cpp/cognitive-services/speech/audio-audioconfig
+[autodetectsourcelanguageconfig]: /cpp/cognitive-services/speech/auto-detect-source-language-config
 [translationrecognizer]: /cpp/cognitive-services/speech/translation-translationrecognizer
 [recognitionlang]: /cpp/cognitive-services/speech/speechconfig#setspeechrecognitionlanguage
 [addlang]: /cpp/cognitive-services/speech/translation-speechtranslationconfig#addtargetlanguage
