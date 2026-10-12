@@ -19,7 +19,7 @@ zone_pivot_groups: selection-browser-tool
 
 # Automate browser tasks with the Browser Automation tool
 
-Browser Automation Tool (BAT) is **generally available in Microsoft Foundry**. It enables scalable, reliable browser-based automation within Foundry agents. It is available as an MCP tool powered by Playwright Workspaces as its headless browser infrastructure layer. It integrates seamlessly with modern agentic workflows while providing enterprise-grade security, observability, and extensibility.
+The Browser Automation Tool (BAT) is **generally available in Microsoft Foundry**. It enables scalable, reliable browser-based automation within Foundry agents. It's available as an MCP tool powered by Playwright Workspaces as its headless browser infrastructure layer. It integrates seamlessly with modern agentic workflows while providing enterprise-grade security, observability, and extensibility.
 
 With Browser Automation Tool, agents can interact with websites to navigate pages, extract and validate information, interact with page elements, complete forms, and perform multi-step browser workflows.
 
