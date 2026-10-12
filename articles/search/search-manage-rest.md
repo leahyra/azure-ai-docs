@@ -211,8 +211,6 @@ Reference: [Search service create or update](/rest/api/searchmanagement/services
 
 Read `properties.endpoint` from the service response before connecting to the data-plane APIs. An endpoint with an auto-generated label has the following format: `https://<service-name>-<label>.sg.search.windows.net/`. The service's `name` and Azure Resource Manager resource `id` don't change.
 
-Don't construct the endpoint from the service name or assume that an existing client URL points to the new service. Use the returned endpoint in your data-plane client.
-
 Choose one of the following values:
 
 | Value | Label reuse |
