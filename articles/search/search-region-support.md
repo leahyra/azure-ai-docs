@@ -66,9 +66,7 @@ The following shortened example shows the response structure. The values are ill
 
 Reference: [Fetch Offerings](/rest/api/searchmanagement/offerings/fetch?view=rest-searchmanagement-2026-09-01-preview&preserve-view=true).
 
-If `defaultRegion` is present and not null, treat it as a **recommendation** for where to create a service. If it's null or absent, select a region that meets your feature, SKU, and data residency requirements. Check current [regional availability](#features-subject-to-regional-availability) and [capacity constraints](search-region-capacity.md) before creating a service. A recommended region doesn't reserve capacity or guarantee that your selected SKU is available when you create the service.
-
-This management API version doesn't change the version you use for search index, query, or other data-plane operations. For earlier preview API versions, see [List Offerings](/rest/api/searchmanagement/offerings/list?view=rest-searchmanagement-2025-02-01-preview&preserve-view=true), which returns a `value` array.
+If it's null or absent, select a region that meets your feature, SKU, and data residency requirements. For earlier preview API versions, see [List Offerings](/rest/api/searchmanagement/offerings/list?view=rest-searchmanagement-2025-02-01-preview&preserve-view=true), which returns a `value` array.
 
 ## Features subject to regional availability
 
