@@ -221,8 +221,6 @@ Choose one of the following values:
 | `SubscriptionReuse` | Reuses the label for the same service name within a subscription. |
 | `TenantReuse` | Reuses the label for the same service name within a Microsoft Entra tenant. |
 
-The scope controls label reuse, not access to your service. Continue to configure [authentication](search-security-rbac.md) and [network access](search-security-best-practices.md) for your security requirements.
-
 Reference: [Search service properties](/rest/api/searchmanagement/services/create-or-update?view=rest-searchmanagement-2026-09-01-preview&preserve-view=true#searchserviceproperties).
 
 ## Upgrade a service
