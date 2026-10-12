@@ -66,7 +66,7 @@ The following shortened example shows the response structure. The values are ill
 
 Reference: [Fetch Offerings](/rest/api/searchmanagement/offerings/fetch?view=rest-searchmanagement-2026-09-01-preview&preserve-view=true).
 
-If it's null or absent, select a region that meets your feature, SKU, and data residency requirements. For earlier preview API versions, see [List Offerings](/rest/api/searchmanagement/offerings/list?view=rest-searchmanagement-2025-02-01-preview&preserve-view=true), which returns a `value` array.
+If `defaultRegion` is null or absent, select a region that meets your feature, SKU, and data residency requirements. For earlier preview API versions, see [List Offerings](/rest/api/searchmanagement/offerings/list?view=rest-searchmanagement-2025-02-01-preview&preserve-view=true), which returns a `value` array.
 
 ## Features subject to regional availability
 
