@@ -35,7 +35,7 @@ Browser Automation Tool (BAT) provides a comprehensive platform for browser auto
 - Flexible orchestration layers
 
 > [!IMPORTANT]
-> Browser Automation Tool controls web browsers on your behalf and can take unintended actions. Testing and monitoring are recommended. See [Transparency Note for Foundry Agent Service - Microsoft Foundry](/azure/foundry/responsible-ai/agents/transparency-note) to learn more.
+> The Browser Automation Tool controls web browsers on your behalf and can take unintended actions. Testing and monitoring are recommended. To learn more, see [Transparency Note for Foundry Agent Service - Microsoft Foundry](/azure/foundry/responsible-ai/agents/transparency-note).
 
 ## Use cases
 
