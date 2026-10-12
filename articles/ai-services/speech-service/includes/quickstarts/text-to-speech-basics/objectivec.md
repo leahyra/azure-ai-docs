@@ -2,8 +2,9 @@
 author: PatrickFarley
 ms.service: azure-speech-foundry-tools
 ms.topic: include
-ms.date: 7/17/2025
+ms.date: 10/09/2026
 ms.author: pafarley
+ai-usage: ai-assisted
 ---
 
 [!INCLUDE [Header](../../common/objectivec.md)]
@@ -18,7 +19,7 @@ ms.author: pafarley
 
 The Speech SDK for Objective-C is distributed as a framework bundle. The framework supports both Objective-C and Swift on both iOS and macOS.
 
-The Speech SDK can be used in Xcode projects as a [CocoaPod](https://cocoapods.org/), or [downloaded directly](https://aka.ms/csspeech/macosbinary) and linked manually. This guide uses a CocoaPod. Install the CocoaPod dependency manager as described in its [installation instructions](https://guides.cocoapods.org/using/getting-started.html).
+Install the Speech SDK in Xcode with [Swift Package Manager](https://github.com/microsoft/speech-sdk-spm). You can also [download the SDK binary](https://aka.ms/csspeech/macosbinary) and link it manually.
 
 ### Set environment variables
 
@@ -29,9 +30,8 @@ The Speech SDK can be used in Xcode projects as a [CocoaPod](https://cocoapods.o
 Follow these steps to synthesize speech in a macOS application.
 
 1. Clone the [Azure-Samples/cognitive-services-speech-sdk](https://github.com/Azure-Samples/cognitive-services-speech-sdk) repository to get the [Synthesize audio in Objective-C on macOS using the Speech SDK](https://github.com/Azure-Samples/cognitive-services-speech-sdk/tree/master/quickstart/objectivec/macos/text-to-speech) sample project. The repository also has iOS samples.
-1. Open the directory of the downloaded sample app (`helloworld`) in a terminal.
-1. Run the command `pod install`. This command generates a `helloworld.xcworkspace` Xcode workspace that contains both the sample app and the Speech SDK as a dependency.
-1. Open the `helloworld.xcworkspace` workspace in Xcode.
+1. Open the sample app's `helloworld.xcodeproj` project in Xcode.
+1. If the Speech SDK package isn't already configured, select **File** > **Add Package Dependencies**, enter `https://github.com/microsoft/speech-sdk-spm`, and add the `MicrosoftCognitiveServicesSpeech-macOS` product to the app target. Select a version starting at `1.51.0`.
 1. Open the file named *AppDelegate.m* and locate the `buttonPressed` method as shown here.
 
    ```ObjectiveC

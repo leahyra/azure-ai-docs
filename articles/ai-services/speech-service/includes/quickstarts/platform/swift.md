@@ -2,8 +2,9 @@
 author: PatrickFarley
 ms.service: azure-speech-foundry-tools
 ms.topic: include
-ms.date: 02/02/2024
+ms.date: 10/09/2026
 ms.author: pafarley
+ai-usage: ai-assisted
 ---
 
 [!INCLUDE [Header](../../common/swift.md)]
@@ -17,57 +18,36 @@ In this quickstart, you install the [Speech SDK](~/articles/ai-services/speech-s
 
 # [Mac](#tab/mac)
 
-The Speech SDK for Swift is available natively as a CocoaPod package for Mac x64 and ARM-based systems.
+Install the Speech SDK for Swift on Mac with Swift Package Manager.
 
-System requirements for Mac:
+System requirements for the Mac app:
 
-- A macOS version 10.14 or later
+- Target macOS 10.14 or later
 
-The macOS CocoaPod package is available for download and use with the [Xcode 9.4.1](https://apps.apple.com/us/app/xcode/id497799835) or later integrated development environment (IDE).
+Use Xcode 12 or later to add the Swift package.
 
-1. Go to the Xcode directory where your *.xcodeproj* project file is located.
-1. Run `pod init` to create a pod file named *Podfile*.
-1. Replace the contents of *Podfile* with the following content. Update the `target` name from `AppName` to the name of your app. Update the platform or pod version as needed.
+1. Open your *.xcodeproj* project in Xcode.
+1. Select **File** > **Add Package Dependencies**.
+1. Enter `https://github.com/microsoft/speech-sdk-spm` and select a version starting at `1.51.0`.
+1. Add the `MicrosoftCognitiveServicesSpeech-macOS` product to your app target.
 
-   ```objc
-   platform :osx, 10.14
-   use_frameworks!
-    
-   target 'AppName' do
-     pod 'MicrosoftCognitiveServicesSpeech-macOS', '~> 1.43.0'
-   end
-   ```
-
-1. Run `pod install` to install the Speech SDK.
-
-Alternatively, download the [binary CocoaPod](https://aka.ms/csspeech/macosbinary) and extract its contents. In your Xcode project, add a reference to the extracted *MicrosoftCognitiveServicesSpeech.xcframework* folder and its contents.
+Alternatively, download the [SDK binary](https://aka.ms/csspeech/macosbinary) and extract its contents. In your Xcode project, add a reference to the extracted *MicrosoftCognitiveServicesSpeech.xcframework* folder and its contents.
 
 # [iOS](#tab/ios)
 
-The Speech SDK for Swift is available natively as a CocoaPod package.
+Install the Speech SDK for Swift on iOS with Swift Package Manager.
 
 System requirements for iOS:
 
-- A macOS version 10.14 or later
-- Target iOS 9.3 or later
+- Target iOS 11.0 or later
 
-The macOS CocoaPod package is available for download and use with the [Xcode 9.4.1](https://apps.apple.com/us/app/xcode/id497799835) or later integrated development environment (IDE).
+Use Xcode 12 or later to add the Swift package.
 
-1. Go to the Xcode directory where your *.xcodeproj* project file is located.
-1. Run `pod init` to create a pod file named *Podfile*.
-1. Replace the contents of *Podfile* with the following. Update the `target` name from `AppName` to the name of your app. Update the platform or pod version as needed.
+1. Open your *.xcodeproj* project in Xcode.
+1. Select **File** > **Add Package Dependencies**.
+1. Enter `https://github.com/microsoft/speech-sdk-spm` and select a version starting at `1.51.0`.
+1. Add either `MicrosoftCognitiveServicesSpeech-iOS` (standard) or `MicrosoftCognitiveServicesSpeechEmbedded-iOS` (on-device/embedded) to your app target. Select only one product.
 
-    ```objc
-    platform :ios, '9.3'
-    use_frameworks!
-    
-    target 'AppName' do
-      pod 'MicrosoftCognitiveServicesSpeech-iOS', '~> 1.43.0'
-    end
-    ```
-
-1. Run `pod install` to install the Speech SDK.
-
-Alternatively, download the [binary CocoaPod](https://aka.ms/csspeech/iosbinary) and extract its contents. In your Xcode project, add a reference to the extracted *MicrosoftCognitiveServicesSpeech.xcframework* folder and its contents.
+Alternatively, download the [SDK binary](https://aka.ms/csspeech/iosbinary) and extract its contents. In your Xcode project, add a reference to the extracted *MicrosoftCognitiveServicesSpeech.xcframework* folder and its contents.
 
 ---
