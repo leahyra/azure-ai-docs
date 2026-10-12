@@ -8,7 +8,7 @@ manager: mcleans
 ms.service: azure-speech-foundry-tools
 ms.topic: how-to
 ms.custom: references_regions
-ms.date: 09/22/2026
+ms.date: 10/12/2026
 ai-usage: ai-assisted
 ms.author: pafarley
 ms.reviewer: pafarley
@@ -64,10 +64,10 @@ All styles except lisa-graceful-sitting, lisa-graceful-standing, lisa-technical-
 
 | Characters | Preview image | Avatar base model |
 | --- | --- | --- |
-| **Leonie** | <img src="media/leonie-casual.png" width="256" height="256" alt="Image of the Leonie Avatar."> | `vasa-2` |
-| **Leonie Professional** | <img src="media/leonie-business.png" width="256" height="256" alt="Image of the Leonie Professional avatar."> | `vasa-2` |
-| **George** | <img src="media/george.png" width="256" height="256" alt="Image of the George Avatar."> | `vasa-2` |
-| **Marcel** | <img src="media/marcel.png" width="256" height="256" alt="Image of the Marcel Avatar."> | `vasa-2` |
+| **Leonie** (preview) | <img src="media/leonie-casual.png" width="256" height="256" alt="Image of the Leonie Avatar."> | `vasa-2` |
+| **Leonie Professional** (preview) | <img src="media/leonie-business.png" width="256" height="256" alt="Image of the Leonie Professional avatar."> | `vasa-2` |
+| **George** (preview) | <img src="media/george.png" width="256" height="256" alt="Image of the George Avatar."> | `vasa-2` |
+| **Marcel** (preview) | <img src="media/marcel.png" width="256" height="256" alt="Image of the Marcel Avatar."> | `vasa-2` |
 | **Adrian** | <img src="media/adrian.png" width="256" height="256" alt="Image of the Adrian Avatar."> | `vasa-1` |
 | **Amara** | <img src="media/amara.png" width="256" height="256" alt="Image of the Amara Avatar."> | `vasa-1` |
 | **Amira** | <img src="media/amira-avatar.png" width="256" height="256" alt="Image of the Amira Avatar."> | `vasa-1` |

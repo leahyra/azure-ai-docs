@@ -142,8 +142,14 @@ items:
     displayName: Instant access to models in Microsoft Foundry (preview)
     href: ../../concepts/instant-models.md
   - name: Managed compute (preview)
-    displayName: Managed compute deployment for open-source AI models in Foundry
-    href: ../../concepts/managed-compute-overview.md
+    items:
+    - name: Overview
+      displayName: Managed compute deployment for open-source AI models in Foundry
+      href: ../../concepts/managed-compute-overview.md
+    - name: Adapter deployment overview (preview)
+      href: ../../concepts/adapter-deployment-overview.md
+    - name: Deploy LoRA adapters (preview)
+      href: ../../how-to/deploy-lora-managed-compute.md
   - name: Deployment types
     displayName: Deployment types for Microsoft Foundry Models
     href: ../../foundry-models/concepts/deployment-types.md

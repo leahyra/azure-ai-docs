@@ -3,7 +3,7 @@ author: PatrickFarley
 ms.author: pafarley
 ms.service: azure-speech-foundry-tools
 ms.topic: include
-ms.date: 08/07/2025
+ms.date: 10/12/2026
 ai-usage: ai-assisted
 ---
 
@@ -54,6 +54,9 @@ You can find the verbal consent statement in multiple languages via the [Azure-S
 
 For more information about recording the consent video, see [How to record video samples](../../../../text-to-speech-avatar/custom-avatar-record-video-samples.md).
 
+> [!NOTE]
+> Video rotation metadata isn't supported for consent videos. If a video relies on rotation metadata to display upright, rotate and re-encode the video frames in the correct orientation before uploading. For more information, see [Data requirements](../../../../text-to-speech-avatar/custom-avatar-record-video-samples.md#data-requirements).
+
 To add an avatar talent profile and upload their consent statement in your project, follow these steps:
 1. Sign in to the [Speech Studio](https://speech.microsoft.com).
 1. Select **Custom avatar** > Your project name > **Set up avatar talent** > **Upload consent video**.
@@ -78,6 +81,8 @@ The Speech service uses your training data to create a unique avatar tuned to ma
 All data you upload must meet the requirements for the data type that you choose. To ensure that the Speech service accurately processes your data, it's important to correctly format your data before upload. To confirm that your data is correctly formatted, see [Data requirements](../../../../text-to-speech-avatar/custom-avatar-record-video-samples.md#data-requirements). 
 
 ### Upload your data
+
+Video rotation metadata isn't supported for training videos. Encode the video frames in the correct orientation before uploading. For more information, see [Data requirements](../../../../text-to-speech-avatar/custom-avatar-record-video-samples.md#data-requirements).
 
 When you're ready to upload your data, go to the **Prepare training data** tab to add your data. 
 

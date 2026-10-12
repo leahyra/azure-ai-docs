@@ -199,14 +199,14 @@ Managed compute is in **public preview**. Note the following before deploying pr
 
 [!INCLUDE [Feature preview](../includes/feature-preview.md)]
 
-In the current Foundry experience, a base deployment with a compatible LoRA-enabled template can host one or more adapters. The adapter must match the base model and version; base-model deployment support alone doesn't establish adapter support. See [Deploy fine-tuned models with managed compute (preview)](../fine-tuning/deploy-fine-tuned-models.md#deploy-with-managed-compute-preview).
+In the current Foundry experience, a base deployment with a compatible LoRA-enabled template can host one or more adapters. The adapter must match the base model and version; base-model deployment support alone doesn't establish adapter support. See [Adapter deployment overview for managed compute (preview)](adapter-deployment-overview.md).
 
 ## Related content
-
-- [Fine-tuning overview](../fine-tuning/overview.md)
-- [Deploy fine-tuned models with managed compute (preview)](../fine-tuning/deploy-fine-tuned-models.md#deploy-with-managed-compute-preview)
 - [Deploy open-source models with managed compute](../how-to/deploy-models-managed.md)
 - [Deployment overview for Microsoft Foundry Models](deployments-overview.md)
+- [Adapter deployment overview for managed compute (preview)](adapter-deployment-overview.md)
+- [Deploy fine-tuned LoRA adapters to managed compute (preview)](../how-to/deploy-lora-managed-compute.md)
+- [Fine-tuning overview](../fine-tuning/overview.md)
 - [Role-based access control for Microsoft Foundry](rbac-foundry.md)
 - [Plan and manage costs for Microsoft Foundry](manage-costs.md)
 - [Manage and increase quotas](../how-to/quota.md)
