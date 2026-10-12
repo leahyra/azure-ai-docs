@@ -193,7 +193,7 @@ Authorization: ******
 }
 ```
 
-Reference: [Search service create or update](/rest/api/searchmanagement/services/create-or-update?view=rest-searchmanagement-2026-09-01-preview).
+Reference: [Search service create or update](/rest/api/searchmanagement/services/create-or-update?view=rest-searchmanagement-2026-09-01-preview&preserve-view=true).
 
 Wait until provisioning succeeds, and then read `properties.endpoint` from
 the service response before connecting to the data-plane APIs. An endpoint
@@ -218,7 +218,7 @@ configure [authentication](search-security-rbac.md) and
 [network access](search-security-best-practices.md) for your security
 requirements.
 
-Reference: [Search service properties](/rest/api/searchmanagement/services/create-or-update?view=rest-searchmanagement-2026-09-01-preview#searchserviceproperties).
+Reference: [Search service properties](/rest/api/searchmanagement/services/create-or-update?view=rest-searchmanagement-2026-09-01-preview&preserve-view=true#searchserviceproperties).
 
 ## Upgrade a service
 
