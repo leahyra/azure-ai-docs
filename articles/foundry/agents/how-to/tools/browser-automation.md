@@ -89,7 +89,7 @@ The Browser Automation Tool provides browser automation tools for managing brows
 
 In Microsoft Foundry, Browser Automation integrates through toolboxes and uses the Playwright Workspaces remote Model Context Protocol (MCP) server for managed browser execution. Enable only the tools required for your scenario.
 
-For the complete list of tools, parameters, and usage guidance, see [Automate browsers with the Playwright Workspaces remote MCP server](https://learn.microsoft.com/en-us/azure/app-testing/playwright-cloud-browsers/how-to-playwright-workspaces-remote-mcp#tool-reference).
+For the complete list of tools, parameters, and usage guidance, see [Automate browsers with the Playwright Workspaces remote MCP server](/azure/app-testing/playwright-cloud-browsers/how-to-playwright-workspaces-remote-mcp#tool-reference).
 
 ## Regional support
 
