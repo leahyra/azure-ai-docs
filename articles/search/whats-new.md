@@ -23,8 +23,6 @@ Learn about the latest updates to Azure AI Search functionality, documentation, 
 
 ## September 2026
 
-The following preview updates use the **management** API version `2026-09-01-preview`. They don't change the API version used for search indexing, queries, or other data-plane operations.
-
 | Item | Description |
 |--|--|
 | [Search Management 2026-09-01-preview](/rest/api/searchmanagement/operation-groups?view=rest-searchmanagement-2026-09-01-preview&preserve-view=true) | Preview REST API version for the control-plane operations described in this table. |
