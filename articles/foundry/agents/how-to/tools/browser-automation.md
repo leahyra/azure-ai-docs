@@ -85,7 +85,7 @@ This architecture enables agents to perform workflows such as navigating website
 
 
 ## List of tools
-Browser Automation Tool provides browser automation tools for managing browser sessions, navigating and inspecting webpages, interacting with elements, handling tabs and files, and capturing browser state.
+The Browser Automation Tool provides browser automation tools for managing browser sessions, navigating and inspecting webpages, interacting with elements, handling tabs and files, and capturing browser state.
 
 In Microsoft Foundry, Browser Automation integrates through toolboxes and uses the Playwright Workspaces remote Model Context Protocol (MCP) server for managed browser execution. Enable only the tools required for your scenario.
 
