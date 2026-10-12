@@ -6,7 +6,7 @@ manager: mcleans
 ms.service: microsoft-foundry
 ms.subservice: foundry-agent-service
 ms.topic: how-to
-ms.date: 08/19/2026
+ms.date: 10/12/2026
 author: mattwojo
 reviewer: lindazqli
 ms.author: mattwoj
@@ -1241,6 +1241,7 @@ When you add the Grounding with Bing Search or Grounding with Bing Custom Search
 
 ## Supported capabilities and known issues
 
+- [Prompt caching](../../../openai/how-to/prompt-caching.md) doesn't provide cache hits when you use Grounding with Bing Search or Grounding with Bing Custom Search. Both tools add an instruction with the current timestamp to every request. This change invalidates the prompt cache for each request.
 - The Grounding with Bing Search tool is designed to retrieve real-time information from the web, not specific web domains. To retrieve information from specific domains, use the Grounding with Bing Custom Search tool.
 - Don't ask the model to **summarize** an entire web page.
 - Within one run, the AI model evaluates the tool outputs and might decide to invoke the tool again for more information and context. The AI model might also decide which pieces of tool outputs are used to generate the response.
