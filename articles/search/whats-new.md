@@ -1,7 +1,7 @@
 ---
 title: What's New
 description: Stay up to date with the latest Azure AI Search features, updates, and announcements. Discover new capabilities for search, vector, and AI-powered retrieval.
-ms.date: 09/23/2026
+ms.date: 10/09/2026
 ms.service: azure-ai-search
 ms.topic: whats-new
 ms.custom:
@@ -30,7 +30,8 @@ indexing, queries, or other data-plane operations.
 | Item | Description |
 |--|--|
 | [Search Management 2026-09-01-preview](/rest/api/searchmanagement/operation-groups?view=rest-searchmanagement-2026-09-01-preview&preserve-view=true) | Preview REST API version for the control-plane operations described in this table. |
-| [Discover regional offerings](search-region-support.md#discover-regional-offerings-with-the-management-rest-api-preview) (preview) | Fetch the features and SKUs offered in each region with the new `fetchOfferings` management operation. Its `defaultRegion` value recommends a region for new services when available; if it's null, choose a region that meets your requirements. Earlier preview versions retain the `offerings` list operation. |
+| [Discover regional offerings](search-region-support.md#discover-regional-offerings-with-the-management-rest-api-preview) (preview) | Fetch the features and SKUs offered in each region with the new `fetchOfferings` management operation. If present and not null, `defaultRegion` recommends a region for new services. Otherwise, choose a region that meets your requirements. Earlier preview versions retain the `offerings` list operation. |
+| [Auto-generated DNS labels](search-manage-rest.md#create-a-service-with-an-auto-generated-dns-label) (preview) | Use the `2026-09-01-preview` management REST API to choose a label reuse scope when you create an Azure AI Search service. Read `properties.endpoint` from the service response instead of constructing the endpoint from the service name. |
 
 ## August 2026
 

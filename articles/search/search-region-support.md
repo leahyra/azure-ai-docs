@@ -3,7 +3,7 @@ title: Supported Regions
 description: Learn about the regions that offer Azure AI Search and the features available in each region.
 author: mattwojo
 ms.author: mattwoj
-ms.date: 09/23/2026
+ms.date: 10/09/2026
 ms.service: azure-ai-search
 ms.topic: concept-article
 ai-usage: ai-assisted
@@ -22,8 +22,7 @@ This article identifies the cloud regions in which Azure AI Search is available.
 
 To check which Azure AI Search features and SKUs are offered in each region,
 call Fetch Offerings with the `2026-09-01-preview` **management** API version.
-Use a Microsoft Entra
-token for Azure Resource Manager and an identity permitted to invoke
+Use a Microsoft Entra token for Azure Resource Manager and an identity permitted to invoke
 `Microsoft.Search/fetchOfferings/action`. For management authentication
 guidance, see [Manage your service using REST APIs](search-manage-rest.md#prerequisites).
 The operation has no subscription ID in its URL and requires no request body.
@@ -40,10 +39,10 @@ az rest --method post --url $uri --subscription "YOUR-SUBSCRIPTION-ID"
 Reference: [Fetch Offerings](/rest/api/searchmanagement/offerings/fetch?view=rest-searchmanagement-2026-09-01-preview&preserve-view=true).
 
 The response contains a `regions` array with each region's `regionName`,
-`features`, and `skus`. Use the `defaultRegion` value, when present and not
-null, as a **recommendation** for where to create a service. If it's null or
-absent, select a region that meets your feature, SKU, and data residency
-requirements. Check current [regional availability](#features-subject-to-regional-availability)
+`features`, and `skus`. If `defaultRegion` is present and not null, treat it
+as a **recommendation** for where to create a service. If it's null or absent,
+select a region that meets your feature, SKU, and data residency requirements.
+Check current [regional availability](#features-subject-to-regional-availability)
 and [capacity constraints](search-region-capacity.md) before creating a
 service. A recommended region doesn't reserve capacity or guarantee that
 your selected SKU is available when you create the service.
