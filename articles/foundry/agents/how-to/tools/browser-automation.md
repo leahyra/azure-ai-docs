@@ -227,7 +227,7 @@ To use Browser Automation Tool with the GitHub Copilot harness:
 4. Save the agent configuration and start a new chat session.
 5. Give the agent a browser-based task and verify that it uses Browser Automation Tool to complete the task.
  
-For example, you can ask the agent to navigate to a website, find specific information, interact with page elements, or complete a multi-step browser workflow.
+For example, you can ask the agent to navigate to a website, find specific information, interact with page elements, or complete a multistep browser workflow.
 
 ### Add browser automation to a toolbox with the Azure Developer CLI
 
