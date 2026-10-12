@@ -155,7 +155,7 @@ PUT https://management.azure.com/subscriptions/{{subscription-id}}/resourceGroup
 
 ## Create a service with an auto-generated DNS label
 
-An auto-generated DNS label adds a generated suffix to your Azure AI Search service's endpoint hostname. Use this feature to choose a unique label or reuse the label for the same service name within your subscription or Microsoft Entra tenant.
+An auto-generated DNS label adds a generated suffix to your Azure AI Search service's endpoint hostname. Azure AI Search generates the label automatically; you choose only its reuse scope. The scope determines whether the label is unique or reused for the same service name within your subscription or Microsoft Entra tenant.
 
 Configure this feature through the `2026-09-01-preview` Management REST API when you create a service. Choose the label's reuse scope at creation because you can't change the scope afterward.
 
