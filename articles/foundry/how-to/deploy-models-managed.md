@@ -382,10 +382,10 @@ Some larger models take longer than the typical 10–15 minutes to come up. If `
 
 ## Related content
 
-- [Deploy fine-tuned models with managed compute (preview)](../fine-tuning/deploy-fine-tuned-models.md#deploy-with-managed-compute-preview)
-- [Fine-tuning overview](../fine-tuning/overview.md)
 - [Managed compute in Microsoft Foundry](../concepts/managed-compute-overview.md)
 - [Deployment overview for Microsoft Foundry Models](../concepts/deployments-overview.md)
+- [Deploy fine-tuned LoRA adapters to managed compute (preview)](deploy-lora-managed-compute.md)
+- [Fine-tuning overview](../fine-tuning/overview.md)
 - [Role-based access control for Microsoft Foundry](../concepts/rbac-foundry.md)
 - [Plan and manage costs for Microsoft Foundry](../concepts/manage-costs.md)
 - [Manage and increase quotas for resources](quota.md)
