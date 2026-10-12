@@ -6,9 +6,10 @@ author: PatrickFarley
 manager: mcleans
 ms.service: azure-speech-foundry-tools
 ms.topic: best-practice
-ms.date: 02/25/2026
+ms.date: 10/12/2026
 ms.author: pafarley
 keywords: how to record video samples for custom text to speech avatar
+ai-usage: ai-assisted
 ---
 
 # Record video samples for custom text to speech avatar
@@ -102,10 +103,11 @@ Basic video processing helps improve model training efficiency:
 
 - Keep the character centered on screen with consistent size and position throughout recording. Keep all video processing parameters like brightness and contrast consistent. The output avatar's size, position, brightness, and contrast directly reflect those in the training data. No alterations are applied during processing or model building.
 - Start and end clips in status 0. Actors should close their mouths, smile, and look ahead. The video should be continuous, not abrupt.
+- Video rotation metadata isn't supported for consent or training videos. Encode the video frames in the correct orientation, rather than relying on a media player to rotate them during playback. If necessary, rotate and re-encode the frames before uploading. For example, encode a portrait video at 1080 × 1920, rather than 1920 × 1080 with rotation metadata.
 
 **Avatar training video recording file format:** .mp4 or .mov.
 
-**Resolution:** At least 1920x1080. 3840x2160 to train a 4K avatar
+**Resolution:** At least 1920 × 1080 (landscape) or 1080 × 1920 (portrait). Use 3840 × 2160 (landscape) or 2160 × 3840 (portrait) to train a 4K avatar.
 
 **Frame rate per second:** At least 25 FPS.
 

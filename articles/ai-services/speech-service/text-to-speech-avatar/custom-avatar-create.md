@@ -6,7 +6,7 @@ manager: mcleans
 ms.service: azure-speech-foundry-tools
 ms.topic: how-to
 ms.custom: references_regions
-ms.date: 09/18/2026
+ms.date: 10/12/2026
 ms.author: pafarley
 author: PatrickFarley
 zone_pivot_groups: foundry-speech-studio

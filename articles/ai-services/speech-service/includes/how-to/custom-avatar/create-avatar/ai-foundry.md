@@ -3,7 +3,7 @@ author: PatrickFarley
 ms.author: pafarley
 ms.service: azure-speech-foundry-tools
 ms.topic: include
-ms.date: 09/18/2026
+ms.date: 10/12/2026
 ai-usage: ai-assisted
 ---
 
@@ -57,6 +57,9 @@ You must provide a video file with a recorded statement from your avatar talent 
 
 For more information about recording the consent video, see [How to record video samples](../../../../text-to-speech-avatar/custom-avatar-record-video-samples.md) and [Disclosure for avatar talent](/azure/ai-foundry/responsible-ai/speech-service/text-to-speech/disclosure-voice-talent).
 
+> [!NOTE]
+> Video rotation metadata isn't supported for consent videos. If a video relies on rotation metadata to display upright, rotate and re-encode the video frames in the correct orientation before uploading. For more information, see [Data requirements](../../../../text-to-speech-avatar/custom-avatar-record-video-samples.md#data-requirements).
+
 On **Register avatar talent**, use **Select data** to reuse an existing consent recording. To upload a new consent recording, follow these steps:
 
 1. Select **Upload video**.
@@ -79,6 +82,8 @@ The Speech service uses your training data to create a unique avatar tuned to ma
 All data you upload must meet the requirements for the data type that you choose. To ensure that the Speech service accurately processes your data, it's important to correctly format your data before upload. To confirm that your data is correctly formatted, see [Data requirements](../../../../text-to-speech-avatar/custom-avatar-record-video-samples.md#data-requirements). 
 
 ### Upload your data
+
+Video rotation metadata isn't supported for training videos. Encode the video frames in the correct orientation before uploading. For more information, see [Data requirements](../../../../text-to-speech-avatar/custom-avatar-record-video-samples.md#data-requirements).
 
 On the **Training data** step, use **Select data** to reuse existing training data, or upload new videos.
 
