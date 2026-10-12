@@ -3,7 +3,7 @@ title: Supported Regions
 description: Learn about the regions that offer Azure AI Search and the features available in each region.
 author: mattwojo
 ms.author: mattwoj
-ms.date: 08/24/2026
+ms.date: 10/09/2026
 ms.service: azure-ai-search
 ms.topic: concept-article
 ai-usage: ai-assisted
@@ -17,6 +17,56 @@ ms.custom:
 [!INCLUDE [search-fiq-banner](./includes/search-fiq-banner.md)]
 
 This article identifies the cloud regions in which Azure AI Search is available. It also lists which premium features are available in each region.
+
+## Discover regional offerings with the management REST API (preview)
+
+To check which Azure AI Search features and SKUs are offered in each region, call Fetch Offerings with the `2026-09-01-preview` **management** API version. Use a Microsoft Entra token for Azure Resource Manager and an identity permitted to invoke `Microsoft.Search/fetchOfferings/action`. For authentication and REST client setup, see [Manage your service using REST APIs](search-manage-rest.md#prerequisites). The operation has no subscription ID in its URL and requires no request body.
+
+```http
+POST https://management.azure.com/providers/Microsoft.Search/fetchOfferings?api-version=2026-09-01-preview HTTP/1.1
+Authorization: ******
+```
+
+The following shortened example shows the response structure. The values are illustrative, not a statement of current regional availability or limits.
+
+```json
+{
+  "defaultRegion": "centralus",
+  "regions": [
+    {
+      "regionName": "East US",
+      "features": [
+        {
+          "name": "SemanticRanker"
+        },
+        {
+          "name": "QueryRewriting"
+        }
+      ],
+      "skus": [
+        {
+          "sku": {
+            "name": "standard"
+          },
+          "limits": {
+            "indexes": 50,
+            "indexers": 50,
+            "partitionStorageInGigabytes": 160,
+            "partitionVectorStorageInGigabytes": 35,
+            "searchUnits": 36,
+            "replicas": 12,
+            "partitions": 12
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+Reference: [Fetch Offerings](/rest/api/searchmanagement/offerings/fetch?view=rest-searchmanagement-2026-09-01-preview&preserve-view=true).
+
+If `defaultRegion` is null or absent, select a region that meets your feature, SKU, and data residency requirements. For earlier preview API versions, see [List Offerings](/rest/api/searchmanagement/offerings/list?view=rest-searchmanagement-2025-02-01-preview&preserve-view=true), which returns a `value` array.
 
 ## Features subject to regional availability
 
