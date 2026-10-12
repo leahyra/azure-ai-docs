@@ -85,15 +85,9 @@ Over time, you can track current and projected costs for individual resources an
 
 ## Name your service
 
-Enter a name for your search service. With the default naming behavior, the
-name is part of the endpoint:
-`https://your-service-name.search.windows.net`. For example, the name
-`myservice` produces `https://myservice.search.windows.net`.
+Enter a name for your search service. With the default naming behavior, the name is part of the endpoint: `https://your-service-name.search.windows.net`. For example, the name `myservice` produces `https://myservice.search.windows.net`.
 
-Services created with an
-[auto-generated DNS label through the Management REST API](search-manage-rest.md#create-a-service-with-an-auto-generated-dns-label)
-have a different endpoint. Use the endpoint returned for your service instead
-of constructing it from the service name.
+Services created with an [auto-generated DNS label through the Management REST API](search-manage-rest.md#create-a-service-with-an-auto-generated-dns-label) have a different endpoint. Use the endpoint returned for your service instead of constructing it from the service name.
 
 When naming your service, follow these rules:
 
