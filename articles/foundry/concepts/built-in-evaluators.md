@@ -4,7 +4,7 @@ description: "Comprehensive reference for all built-in evaluators in Microsoft F
 author: lgayhardt
 ms.author: lagayhar
 ms.reviewer: skohlmeier
-ms.date: 06/02/2026
+ms.date: 09/09/2026
 ms.service: microsoft-foundry
 ms.subservice: foundry-observability
 ms.topic: reference
@@ -88,6 +88,8 @@ To learn more, see [Risk and safety evaluators](./evaluation-evaluators/risk-saf
 | Tool Output Utilization | Measures whether the agent correctly interprets and uses tool outputs contextually in responses and subsequent calls. |
 | Tool Call Success | Evaluates whether all tool calls executed successfully without technical failures. |
 | Quality Grader (preview) | Enables quality evaluation across multiple dimensions—relevance, abstention, answer completeness, groundedness, and context coverage—in a single evaluator instead of running individual evaluators separately. |
+| Output Quality (preview) | Batches Fluency, Coherence, Intent Resolution, Task Adherence, Groundedness, and Task Completion into one LLM judge call. |
+| Tool Use Quality (preview) | Batches Tool Call Accuracy, Tool Call Success, Tool Input Accuracy, Tool Output Utilization, and Tool Selection into one LLM judge call. |
 
 To learn more, see [Agent evaluators](./evaluation-evaluators/agent-evaluators.md).
 
@@ -125,19 +127,24 @@ Each evaluator supports specific evaluation levels, indicated by the `supported_
 | `turn` | Evaluates individual agent responses (default) |
 | `conversation` | Evaluates entire multi-turn conversations |
 
-When creating an evaluation run, set `evaluation_level` to match your evaluators' supported levels. If omitted, the default is `turn`.
+When creating an evaluation run, set `evaluation_level` to control whether evaluators score individual turns or the full conversation. If omitted, the default is `turn`.
 
 **Conversation-level evaluators** score the full interaction rather than individual turns. Use them to measure outcomes like user satisfaction, task completion across multiple steps, or conversation-wide coherence.
 
 > [!IMPORTANT]
-> All evaluators in a run must support the specified `evaluation_level`. You can't mix evaluators with incompatible levels in the same evaluation run.
+> When your evaluation data uses the `messages` format, you can include evaluators with different supported evaluation levels in the same run:
+>
+> - With `evaluation_level="turn"`, evaluators score the conversation one turn at a time.
+> - With `evaluation_level="conversation"`, the service runs evaluators that support conversation-level evaluation and skips turn-only evaluators.
+>
+> Conversation-level evaluation requires the `messages` format. Query-and-response data doesn't support `evaluation_level="conversation"`.
 
 ## Combining evaluators
 
 For comprehensive quality assessment, combine multiple evaluators:
 
 - **RAG applications**: Retrieval + Groundedness + Relevance + Content Safety
-- **Agent applications**: Tool Call Accuracy + Task Adherence + Intent Resolution + Rubric + Content Safety
+- **Agent applications**: Output Quality + Tool Use Quality + Rubric + Content Safety
 - **Translation applications**: BLEU + METEOR + Fluency + Coherence
 - **All applications**: Add risk and safety evaluators (Hate and Unfairness, Sexual, Violence, Self-Harm) for responsible AI practices
 

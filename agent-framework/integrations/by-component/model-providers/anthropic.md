@@ -5,10 +5,10 @@ zone_pivot_groups: programming-languages
 author:  rogerbarreto
 ms.topic: tutorial
 ms.author: rbarreto
-ms.date: 09/16/2026
+ms.date: 10/08/2026
 ms.service: agent-framework
 ai-usage: ai-assisted
-ms.custom: update-code1
+ms.custom: update-code2
 ---
 
 # Anthropic
@@ -38,7 +38,6 @@ If you're using Microsoft Foundry, also add:
 
 ```powershell
 dotnet add package Anthropic.Foundry --prerelease
-dotnet add package Azure.Identity
 ```
 
 ## Configuration
@@ -261,6 +260,8 @@ async def explicit_config_example():
     result = await agent.run("What can you do?")
     print(result.text)
 ```
+
+Anthropic SDK 1.x doesn't support the `temperature`, `top_p`, or `top_k` options. Agent Framework ignores these options and logs a warning if you supply them.
 
 ### Using a Custom Base URL
 
@@ -494,12 +495,15 @@ async def thinking_example():
 Anthropic provides managed skills that extend agent capabilities, such as creating PowerPoint presentations. Skills require the Code Interpreter tool to function:
 
 ```python
+from typing import cast
+
 from agent_framework import Agent, Content
 from agent_framework.anthropic import AnthropicClient
+from anthropic import AsyncAnthropic
 
 async def skills_example():
-    # Create client with skills beta flag
-    client = AnthropicClient(additional_beta_flags=["skills-2025-10-02"])
+    client = AnthropicClient()
+    anthropic_client = cast(AsyncAnthropic, client.anthropic_client)
 
     # Create an agent with the pptx skill enabled
     # Skills require the Code Interpreter tool
@@ -539,9 +543,10 @@ async def skills_example():
     if files:
         print("Generated files:")
         for idx, file in enumerate(files):
-            file_content = await client.anthropic_client.beta.files.download(
-                file_id=file.file_id,
-                betas=["files-api-2025-04-14"]
+            if file.file_id is None:
+                continue
+            file_content = await anthropic_client.files.download(
+                file_id=file.file_id
             )
             filename = f"presentation-{idx}.pptx"
             with open(filename, "wb") as f:

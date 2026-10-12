@@ -5,7 +5,7 @@ zone_pivot_groups: programming-languages
 author: eavanvalkenburg
 ms.topic: article
 ms.author: edvan
-ms.date: 09/16/2026
+ms.date: 10/07/2026
 ms.service: agent-framework
 ai-usage: ai-assisted
 ---
@@ -24,11 +24,24 @@ FIDES is based on the [FIDES paper by Costa et al.](https://arxiv.org/abs/2505.2
 ::: zone pivot="programming-language-csharp"
 
 > [!NOTE]
-> FIDES is currently Python-only. A .NET implementation is coming soon. In the meantime, follow the general guidance in [Agent Safety](../concepts/agents/safety.md) for .NET agents and gate high-risk tools behind [Tool Approval](./tools/tool-approval.md).
+> FIDES is currently Python-only; its APIs aren't available in .NET. The .NET [Hyperlight](../integrations/by-component/context-providers/hyperlight.md) and [Local](../integrations/by-component/context-providers/local.md) CodeAct providers don't provide FIDES enforcement.
+>
+> These providers invoke registered `AIFunction` host tools directly rather than routing nested calls through the agent's per-function middleware pipeline. Checks on direct agent tools or the outer `execute_code` call don't cover code-internal intermediate values or file and network capabilities. Host tools must enforce their own authorization and destination controls. See [CodeAct's current limitations](code-act.md#current-limitations).
+>
+> For .NET agents, follow the general guidance in [Agent Safety](../concepts/agents/safety.md) and gate high-risk direct tools behind [Tool Approval](./tools/tool-approval.md).
 
 ::: zone-end
 
 ::: zone pivot="programming-language-python"
+
+> [!WARNING]
+> FIDES isn't currently supported with [Monty](../integrations/by-component/context-providers/monty.md) or [Hyperlight](../integrations/by-component/context-providers/hyperlight.md) CodeAct providers, including their standalone execution tools. Provider-managed host-tool calls inside generated code don't pass through the agent's per-function middleware pipeline.
+>
+> Policy checks on direct agent tools or the outer `execute_code` call don't establish FIDES enforcement for nested calls or code-internal intermediate values. They also don't cover file or network capabilities. Host tools must enforce their own authorization and destination controls.
+>
+> Keep FIDES-dependent tools as direct agent tools, not CodeAct-managed tools, or leave CodeAct disabled for workflows that require these guarantees. This compatibility boundary is a current integration limitation, not an inherent limitation of the [CodeAct pattern](code-act.md).
+>
+> Treat any metadata-based warning as diagnostic only. The absence of a warning doesn't imply support or safety, because FIDES also applies defaults to unannotated tools.
 
 ## The threat model
 
@@ -146,7 +159,7 @@ agent = Agent(
 )
 ```
 
-That is the whole opt-in. After reading the malicious issue from the previous section, the agent is free to call `read_file(".env")` — but the result is labeled `private`, so the follow-up `post_comment(...)` is refused (it caps at `public`). And any attempt to call `write_file(...)` driven by the untrusted issue body is refused outright by `accepts_untrusted=False`. With `approval_on_violation=True`, both refusals surface as human-approval prompts.
+That is the whole opt-in. After reading the malicious issue from the previous section, the agent is free to call `read_file(".env")` — but the result is labeled `private`, so the follow-up `post_comment(...)` is refused (it caps at `public`). And any attempt to call `write_file(...)` driven by the untrusted issue body is refused outright by `accepts_untrusted=False`. With `approval_on_violation=True`, both refusals surface as human-approval prompts when the framework can safely bind the approval to the exact invocation. If it can't create that binding, it blocks the call.
 
 The rest of this page explains every option that appears above, plus the ones you might want to reach for next.
 
@@ -292,6 +305,32 @@ restrictive, but they can't relax it. Use `source_integrity` for tools that
 *introduce* trust state (data fetchers and external APIs) rather than tools that
 *transform* already-labeled inputs.
 
+### Add trusted standing guidance to hidden results
+
+Use `standing_guidance` when a tool needs to explain the meaning of a hidden or
+untrusted result without trusting runtime output. Declare a fixed list of
+sentences in the tool's `additional_properties`:
+
+```python
+@tool(
+    additional_properties={
+        "source_integrity": "untrusted",
+        "standing_guidance": [
+            "A result you cannot read is not a clean validation.",
+        ],
+    },
+)
+async def validate_files(paths: list[str]) -> str:
+    return await compiler.validate(paths)
+```
+
+`LabelTrackingFunctionMiddleware` appends each sentence as a separate,
+framework-owned `Content` item with trusted integrity. It preserves the
+result's resolved confidentiality and principal scope. The declaration is
+frozen before the tool body first runs, so runtime inputs and tool output can't
+change the guidance. Use it only for invariant instructions that are safe to
+declare in source code, not for runtime data.
+
 ### Implicit propagation through arguments
 
 If a tool declares neither per-item labels nor `source_integrity`, FIDES bases
@@ -303,6 +342,39 @@ they can't establish trust or principal authority. A
 to the summary.
 
 When tool arguments contain hidden variable references, FIDES resolves them recursively and evaluates the destination policy against their stored integrity and confidentiality labels. This process prevents blind forwarding from bypassing `accepts_untrusted` or `max_allowed_confidentiality` without exposing the hidden content to the main model. Argument labels don't replace labels declared on the tool result.
+
+#### Detect expanded arguments inside a tool
+
+A tool that accepts untrusted input can call `rewritten_arguments()` to identify arguments that FIDES rewrote during
+variable expansion. The function returns a mapping of argument names to rewritten positions. List arguments use their
+zero-based indexes, while scalar and dictionary arguments use `-1`. It returns an empty mapping when no arguments were
+rewritten.
+
+Use the argument names and indexes to report an error without repeating hidden content:
+
+```python
+from agent_framework import tool
+from agent_framework.security import rewritten_arguments
+
+
+@tool(additional_properties={"accepts_untrusted": True})
+def process_files(files: list[str], destination: str) -> str:
+    rewritten = rewritten_arguments()
+
+    if indexes := rewritten.get("files"):
+        positions = ", ".join(f"files[{index}]" for index in sorted(indexes))
+        raise ValueError(f"Hidden content isn't allowed at {positions}.")
+
+    if -1 in rewritten.get("destination", set()):
+        raise ValueError("Hidden content isn't allowed in destination.")
+
+    return f"Accepted {len(files)} file(s) for {destination}."
+```
+
+Pass a `FunctionInvocationContext` to `rewritten_arguments(context)` when you need to inspect an explicit invocation
+context. Without an argument, it uses the current tool invocation, including code run through `asyncio.to_thread()`.
+If argument validation reorders or filters an expanded list, FIDES marks every final list position as rewritten rather
+than risk exposing a value whose original index is no longer reliable.
 
 Variable expansion fails closed if it detects a reference cycle, nesting would
 exceed 16 variable-reference levels, or one invocation would expand more than
@@ -358,7 +430,7 @@ If the current context's confidentiality is higher than the cap (e.g. context is
 | `default_confidentiality` | `ConfidentialityLabel.PUBLIC` | The confidentiality assumed for an unlabeled tool result. |
 | `allow_untrusted_tools` | `None` | Set of tool names allowed to run even when the context is `untrusted`. Used for data-fetchers (e.g. `read_issue`) that *introduce* untrusted content — they must be callable in any context. Security tools (`quarantined_llm`, `inspect_variable`) are automatically allowed. |
 | `block_on_violation` | `True` | When a policy violation is detected, return an error result and stop the tool. Ignored when `approval_on_violation=True`. |
-| `approval_on_violation` | `False` | When set, a violation triggers a function-approval request (same pipeline as [Tool Approval](./tools/tool-approval.md)) instead of an outright block — the user sees the offending tool name and the label that caused the block and can override. |
+| `approval_on_violation` | `False` | When set, a violation triggers a function-approval request (same pipeline as [Tool Approval](./tools/tool-approval.md)) when the framework can safely bind the approval to the exact invocation. If it can't create that binding, it blocks the call instead of executing it. |
 | `enable_audit_log` | `True` | Record every blocked or approval-gated call for compliance/forensics. |
 | `enable_policy_enforcement` | `True` | If false, labels are still propagated but no sink is ever blocked. Useful for dry-running a configuration to see what *would* be blocked before you turn enforcement on. |
 | `quarantine_chat_client` | `None` | Chat client used by `quarantined_llm`. Without it, `quarantined_llm` returns placeholder responses; with it, the framework actually dispatches isolated, tool-free LLM calls. Use a cheaper model here (e.g. `gpt-4o-mini`). |
@@ -420,7 +492,7 @@ Walking the attack from the top of the page through the agent configured above (
 1. The agent calls `read_issue("our/repo", 42)`. It returns one `Content` item labeled `integrity=untrusted, confidentiality=public` — the issue body and the embedded `[SYSTEM]` block both get the same label, because they arrived in the same tool result. `read_issue` is in `allow_untrusted_tools`, so the call itself is permitted even though the result will taint context.
 2. The main model reads the result. The issue body — the `[SYSTEM]` block included — sits in the main context as raw text, but still labeled untrusted. The model can summarize and classify it directly; the labels travel with the bytes.
 3. The model is potentially fooled by the embedded instruction and decides to follow it. It calls `read_file(".env")`. That call is *allowed* — but the returned content is labeled `integrity=trusted, confidentiality=private`, so the moment it lands in context the run is tainted as private (and remains untrusted from earlier).
-4. The agent then tries `post_comment(...)` with the secret in the body. The `max_allowed_confidentiality="public"` policy on `post_comment` blocks the call — context is `private`, the sink is `public`. With `approval_on_violation=True`, the user sees an approval prompt naming the tool and the label that caused the block.
+4. The agent then tries `post_comment(...)` with the secret in the body. The `max_allowed_confidentiality="public"` policy on `post_comment` blocks the call — context is `private`, the sink is `public`. With `approval_on_violation=True`, the user sees an approval prompt naming the tool and the label that caused the block when the approval can be bound safely. Otherwise, the call remains blocked.
 5. If the embedded instruction had asked the agent to `write_file(...)` instead — say, to overwrite a CI config based on the issue body — that call would be refused outright by the `accepts_untrusted=False` policy on `write_file`, for the same reason: untrusted content is in scope and the sink declined to accept it.
 
 In other words: the same policy fence handles both prompt injection (wrong *integrity*) and data exfiltration (wrong *confidentiality*), and neither requires the model to "notice" the attack.
@@ -499,6 +571,7 @@ FIDES is shipping as experimental on purpose, so the team can iterate on the erg
 3. **Approvals are coarse.** `approval_on_violation=True` gates the violating tool call; it doesn't expose the full label algebra to the user. Richer UI surfaces for "why was I asked to approve this?" are in scope for future iterations.
 4. **Quarantined LLM is single-turn.** `quarantined_llm` is intentionally tools-free and one-shot. Multi-turn quarantined sub-agents are doable but not in this release.
 5. **MCP result labels require a trusted authority.** By default, FIDES combines labels from an MCP server with local policy, so the server can only make a label more restrictive. Set `trust_server_ifc=True` only after you verify who owns the MCP server and determine that you trust its identity, operation, and labeling policy. This setting makes complete, valid labels from the server authoritative, which can relax local labels. Treat labels from an unknown or untrusted MCP server as untrusted input.
+6. **CodeAct integration is unsupported.** Keep FIDES-dependent tools off current CodeAct providers. See [CodeAct's current limitations](code-act.md#current-limitations).
 
 If you hit a bug or have a feature request, open an issue on [the repository](https://github.com/microsoft/agent-framework/issues). For broader feedback on the security model — especially defaults, propagation, and approval ergonomics — join the conversation in [discussion #5624](https://github.com/microsoft/agent-framework/discussions/5624).
 
@@ -522,6 +595,7 @@ If you hit a bug or have a feature request, open an issue on [the repository](ht
 - [Tool Approval](./tools/tool-approval.md) — gate high-risk tools behind human confirmation
 - [Function Tools](./tools/function-tools.md)
 - [Context Providers](../concepts/agents/conversations/context-providers.md)
+- [CodeAct](code-act.md) — current compatibility boundary for generated-code workflows
 - [`agent_framework.security` source](https://github.com/microsoft/agent-framework/blob/main/python/packages/core/agent_framework/security.py)
 - [FIDES samples](https://github.com/microsoft/agent-framework/tree/main/python/samples/02-agents/security)
 - [FIDES Developer Guide](https://github.com/microsoft/agent-framework/blob/main/python/samples/02-agents/security/FIDES_DEVELOPER_GUIDE.md)

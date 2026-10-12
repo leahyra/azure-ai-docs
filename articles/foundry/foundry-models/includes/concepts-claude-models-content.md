@@ -46,6 +46,7 @@ For errors you might encounter when you deploy or call Claude models, see [Deplo
 |---|---|---|---|---|
 | `claude-fable-5-1` | <ul><li>Hosted on Anthropic infrastructure: Preview</li></ul> | 1M / 128K | <ul><li>Adaptive thinking</li><li>Long-running work</li><li>Scientific research with self verification</li><li>Knowledge work; handling challenging knowledge work with less hands-on oversight</li><li>Refusal `stop_reason` on dual-use safeguard policies<sup>1</sup> </li><li> See [What's new in Claude Fable 5.1 and Claude Mythos 5.1](https://platform.claude.com/docs/en/models/fable-5-1/whats-new-fable-5-1) | <ul><li>Long-running agents</li><li>Coding and agents, with deeper reasoning for enterprise workflows</li><li>General science and research</li><li>Financial analysis</li><li>Vision</li></ul> |
 | `claude-fable-5` | <ul><li>Hosted on Anthropic infrastructure: Preview</li></ul> | 1M / 128K | <ul><li>Adaptive thinking</li><li>Reasoning over entire codebases and multi-day project context</li><li>Longer independent work than any prior Claude model</li><li>Self verification</li><li>Sub-agent orchestration</li><li>Refusal `stop_reason` on dual-use safeguard policies<sup>1</sup> </li><li>See [Migrating to Claude Fable 5.1 and Claude Mythos 5.1](https://platform.claude.com/docs/en/models/fable-5-1/migration-guide) | <ul><li>Cybersecurity</li><li>Autonomous coding</li><li>Long-running agents</li><li>Coding and agents, with deeper reasoning for enterprise workflows</li></ul> |
+| `claude-haiku-5-5` | <ul><li>Hosted on Azure: GA </li><li>Hosted on Anthropic infrastructure: GA </li></ul> | 1M / 128K | <ul><li>Adaptive thinking </li><li>`xhigh` effort level</li><li>Reasoning over entire codebases and multi-day project context</li><li>High-res image input (up to 2576px / 3.75MP) are on by default</li><li>Mid-conversation<sup>3</sup> `role:"system"` </li><li>Token budgets<sup>3</sup> (`task_budget`) </li></ul> | <ul><li>Coding</li><li>Long-running agents</li><li>Financial analysis</li><li>Cybersecurity</li><li>Computer use</li><li></li></ul> |
 | `claude-mythos-5-1`<sup>2</sup> | <ul><li>Hosted on Anthropic infrastructure: Gated research preview</li></ul> | 1M / 128K | <ul><li>Adaptive thinking</li><li>Image and text input</li><li>Microsoft Entra ID authentication only </li><li> See [What's new in Claude Fable 5.1 and Claude Mythos 5.1](https://platform.claude.com/docs/en/models/fable-5-1/whats-new-fable-5-1)</li></ul> | <ul><li>Biology and life sciences</li><li>Cybersecurity (defensive use cases prioritized): vulnerability discovery, attack-surface auditing, red teaming, threat intelligence</li><li>Autonomous coding</li><li>Long-running agents</li></ul> |
 | `claude-mythos-5`<sup>2</sup> | <ul><li>Hosted on Anthropic infrastructure: Gated research preview</li></ul> | 1M / 128K | <ul><li>Adaptive thinking</li><li>Image and text input</li><li>Microsoft Entra ID authentication only </li><li> See [Migrating to Claude Fable 5.1 and Claude Mythos 5.1](https://platform.claude.com/docs/en/models/fable-5-1/migration-guide)</li></ul> | <ul><li>Biology and life sciences</li><li>Cybersecurity (defensive use cases prioritized): vulnerability discovery, attack-surface auditing, red teaming, threat intelligence</li><li>Autonomous coding</li><li>Long-running agents</li></ul> |
 | `claude-mythos-preview`<sup>2</sup> |  <ul><li>Hosted on Anthropic infrastructure: Gated research preview</li></ul> | 1M / 128K | <ul><li>Adaptive thinking</li><li>Image and text input</li><li>Microsoft Entra ID authentication only </li><li> See [Migrating to Claude Fable 5.1 and Claude Mythos 5.1](https://platform.claude.com/docs/en/models/fable-5-1/migration-guide)</li></ul> | <ul><li>Cybersecurity (defensive use cases prioritized)</li><li>Autonomous coding</li><li>Long-running agents</li></ul> |
@@ -55,6 +56,7 @@ For errors you might encounter when you deploy or call Claude models, see [Deplo
 | `claude-opus-4-7` | <ul><li>Hosted on Anthropic infrastructure: GA</li></ul>  | 1M / 128K | <ul><li>Adaptive thinking</li><li>Reasoning over entire codebases<li>High-resolution image input (up to 2576px / 3.75MP) </li><li> See [Migrating to Claude Opus 5.5](https://platform.claude.com/docs/en/models/opus-5-5/migration-guide)</li></ul> | <ul><li>Coding</li><li>Enterprise workflows</li><li>Long-running agents</li><li>Multimodal reasoning</li><li>Financial analysis</li><li>Cybersecurity</li></ul> |
 | `claude-opus-4-6` | <ul><li>Hosted on Anthropic infrastructure: GA</li></ul> | 1M / 128K | <ul><li>Adaptive thinking</li><li>Image and text input</li><li>Computer use</li><li>Advanced tool use (search, programmatic calling, examples) </li><li> See [Migrating to Claude Opus 5.5](https://platform.claude.com/docs/en/models/opus-5-5/migration-guide)</li></ul> | <ul><li>Coding</li><li>Enterprise agents</li></ul> |
 | `claude-opus-4-5` | <ul><li>Hosted on Anthropic infrastructure: GA</li></ul> | 200K / 64K | <ul><li>Extended thinking</li><li>Image and text input</li><li>Computer use</li><li>Advanced tool use (search, programmatic calling, examples) </li><li> See [Migrating to Claude Opus 5.5](https://platform.claude.com/docs/en/models/opus-5-5/migration-guide)</li></ul> | <ul><li>Coding</li><li>Agents</li><li>Computer use</li><li>Enterprise workflows</li></ul> |
+| `claude-sonnet-5-5` | <ul><li>Hosted on Azure: GA </li><li>Hosted on Anthropic infrastructure: GA </li></ul> | 1M / 128K | <ul><li>Adaptive thinking </li><li>`xhigh` effort level</li><li>Reasoning over entire codebases and multi-day project context</li><li>High-res image input (up to 2576px / 3.75MP) are on by default</li><li>Mid-conversation<sup>3</sup> `role:"system"` </li><li>Token budgets<sup>3</sup> (`task_budget`) </li></ul> | <ul><li>Coding</li><li>Long-running agents</li><li>Financial analysis</li><li>Cybersecurity</li><li>Computer use</li><li>See [What's new in Claude Sonnet 5.5](https://platform.claude.com/docs/en/models/sonnet-5-5/whats-new-sonnet-5-5)</li></ul> |
 | `claude-sonnet-5` | <ul><li>Hosted on Azure: GA </li><li>Hosted on Anthropic infrastructure: GA </li></ul> | 1M / 128K | <ul><li>Adaptive thinking </li><li>`xhigh` effort level</li><li>Reasoning over entire codebases and multi-day project context</li><li>High-res image input (up to 2576px / 3.75MP) are on by default</li><li>Mid-conversation<sup>3</sup> `role:"system"` </li><li>Token budgets<sup>3</sup> (`task_budget`) </li><li> See [What's new in Claude Sonnet 5](https://platform.claude.com/docs/en/about-claude/models/whats-new-sonnet-5)</li></ul> | <ul><li>Coding</li><li>Long-running agents</li><li>Financial analysis</li><li>Cybersecurity</li><li>Computer use</li></ul> |
 | `claude-sonnet-4-6` | <ul><li>Hosted on Anthropic infrastructure: GA</li></ul> | 1M / 128K | <ul><li>Adaptive thinking</li><li>Image and text input</li><li>Computer use</li><li>Advanced tool use (search, programmatic calling, examples) </li><li> See [Migrating to Claude Sonnet 5](https://platform.claude.com/docs/en/about-claude/models/migration-guide#migrating-to-claude-sonnet-5)</li></ul> | <ul><li>Coding</li><li>Agents</li><li>Enterprise workflows</li></ul> |
 | `claude-sonnet-4-5` | <ul><li>Hosted on Anthropic infrastructure: GA</li></ul> | 200K / 64K | <ul><li>Extended thinking</li><li>Image and text input</li><li>Computer use </li><li> See [Migrating to Claude Sonnet 5](https://platform.claude.com/docs/en/about-claude/models/migration-guide#migrating-to-claude-sonnet-5) </li></ul> | <ul><li>Agents and complex, long-horizon tasks</li><li>High-volume workloads</li></ul> |
@@ -125,6 +127,7 @@ The **Thinking** feature allows specific values for the `thinking` parameter typ
 |-------------------------|:----------:|:---------:|:----------------:|
 | `claude-fable-5-1`      | Yes        | No        | No               |
 | `claude-fable-5`        | Yes        | No        | No               |
+| `claude-haiku-5-5`      | Yes        | Yes       | Yes              |
 | `claude-mythos-5-1`     | Yes        | No        | No               |
 | `claude-mythos-5`       | Yes        | No        | No               |
 | `claude-mythos-preview` | Yes        | Yes       | No               |
@@ -133,6 +136,7 @@ The **Thinking** feature allows specific values for the `thinking` parameter typ
 | `claude-opus-4-8`       | Yes        | No        | Yes              |
 | `claude-opus-4-7`       | Yes        | No        | Yes              |
 | `claude-opus-4-6`       | Yes        | Yes       | Yes              |
+| `claude-sonnet-5-5`     | Yes        | Yes       | Yes              |
 | `claude-sonnet-5`       | Yes        | No        | Yes              |
 | `claude-sonnet-4-6`     | Yes        | Yes       | Yes              |
 
@@ -144,6 +148,7 @@ The **Effort** feature allows specific `effort` levels for each model, as descri
 |---------------------|:-----:|:--------:|:------:|:-------:|:-----:|
 | `claude-fable-5-1`  | Yes   | Yes      | Yes    | Yes     | No    |
 | `claude-fable-5`    | Yes   | Yes      | Yes    | Yes     | No    |
+| `claude-haiku-5-5`  | Yes   | Yes      | Yes    | Yes     | Yes   |
 | `claude-mythos-5-1` | Yes   | Yes      | Yes    | Yes     | No    |
 | `claude-mythos-5`   | Yes   | Yes      | Yes    | Yes     | No    |
 | `claude-opus-5-5`   | Yes   | Yes      | Yes    | Yes     | Yes   |
@@ -151,6 +156,7 @@ The **Effort** feature allows specific `effort` levels for each model, as descri
 | `claude-opus-4-8`   | Yes   | Yes      | Yes    | Yes     | Yes   |
 | `claude-opus-4-7`   | Yes   | Yes      | Yes    | Yes     | Yes   |
 | `claude-opus-4-6`   | Yes   | Yes      | Yes    | No      | Yes   |
+| `claude-sonnet-5-5` | Yes   | Yes      | Yes    | Yes     | Yes   |
 | `claude-sonnet-5`   | Yes   | Yes      | Yes    | Yes     | Yes   |
 | `claude-sonnet-4-6` | Yes   | Yes      | Yes    | No      | Yes   |
 
@@ -205,7 +211,7 @@ Manage the documents and data you provide to Claude.
 Claude models in Foundry are available for the following deployment types in specific Azure regions:
 
 - **Global Standard**: All Claude models (Hosted on Azure and Hosted on Anthropic infrastructure).
-- **Data Zone Standard (US)**: Hosted on Azure versions of `claude-opus-5-5`, `claude-opus-5`, `claude-opus-4-8`, and `claude-sonnet-5`.
+- **Data Zone Standard (US)**: Hosted on Azure versions of `claude-haiku-4-5`, `claude-haiku-5-5`, `claude-opus-5-5`, `claude-opus-5`, `claude-opus-4-8`, `claude-sonnet-5`, and `claude-sonnet-5-5`.
 
 For the exact Azure regions where Claude models are available for deployment, see [Region availability by deployment type](../concepts/models-from-partners.md#region-availability-by-deployment-type).
 

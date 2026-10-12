@@ -526,6 +526,26 @@ groups:
     title: Swift
   - id: programming-language-typescript
     title: TypeScript
+- id: programming-languages-mai-transcribe-2-streaming-sdk
+  title: Programming languages
+  prompt: Choose a programming language
+  pivots:
+  - id: programming-language-python
+    title: Python
+  - id: programming-language-csharp
+    title: C#
+  - id: programming-language-javascript
+    title: JavaScript
+  - id: programming-language-java
+    title: Java
+  - id: programming-language-cpp
+    title: C++
+  - id: programming-language-go
+    title: Go
+  - id: programming-language-objectivec
+    title: Objective-C
+  - id: programming-language-swift
+    title: Swift
 - id: programming-languages-speech-multichannel
 # Owner: eur
   title: Programming languages
@@ -716,10 +736,36 @@ groups:
     title: Foundry portal
   - id: speech-studio
     title: Speech Studio
-  - id: rest-api
-    title: REST
   - id: speech-cli
     title: Speech CLI
+  - id: rest-api
+    title: REST
+- id: voice-agent-quickstart-tools
+# Owner: pafarley
+  title: Development tool
+  prompt: Choose a development tool
+  pivots:
+  - id: portal
+    title: Foundry portal
+  - id: python
+    title: Python SDK
+  - id: javascript
+    title: JavaScript SDK
+  - id: azd
+    title: Azure Developer CLI
+- id: voice-agent-image-input-language
+# Owner: sgilley
+  title: Programming language
+  prompt: Choose a programming language
+  pivots:
+  - id: python
+    title: Python
+  - id: csharp
+    title: C#
+  - id: javascript
+    title: JavaScript/TypeScript
+  - id: java
+    title: Java
 - id: foundry-speech-studio
 # Owner: eur
   title: Programming languages
@@ -1245,10 +1291,10 @@ groups:
     title: Portal
   - id: programming-language-python
     title: Python
-  - id: programming-language-javascript
-    title: JavaScript
   - id: rest-api
     title: REST
+  - id: azd
+    title: CLI
 # Owner: mbullwin
 - id: URL-test-interface
   title: URL Test tool
@@ -2393,3 +2439,27 @@ groups:
     title: Foundry portal
   - id: azure-cli
     title: Azure CLI
+# Owner: sgilley
+- id: voice-agent-config-method
+  title: Configuration method
+  prompt: Choose a configuration method
+  pivots:
+  - id: foundry-portal
+    title: Foundry portal
+  - id: python
+    title: Python SDK
+  - id: csharp
+    title: C# SDK
+  - id: javascript
+    title: JavaScript SDK
+  - id: azure-cli
+    title: Azure CLI
+# Owner: sgilley
+- id: voice-agent-telephony-setup
+  title: Setup method
+  prompt: Choose a setup method
+  pivots:
+  - id: foundry-portal
+    title: Foundry portal
+  - id: api
+    title: API and CLI

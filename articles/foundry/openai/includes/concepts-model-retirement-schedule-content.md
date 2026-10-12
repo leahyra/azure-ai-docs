@@ -8,8 +8,8 @@ reviewer: johnrsanders
 ms.service: microsoft-foundry
 ms.subservice: foundry-openai
 ms.topic: include
-ms.date: 09/21/2026
-ms.custom: include, classic-and-new
+ms.date: 10/05/2026
+ms.custom: include, classic-and-new, doc-kit-assisted
 ai-usage: ai-assisted
 ---
 
@@ -26,10 +26,10 @@ This section lists the retirement lifecycle for Foundry Models sold by Azure.
 | Model | Version | Lifecycle | Retirement date | Replacement |
 |-------|---------|-----------|-----------------|-------------|
 | codex-mini | 2025-05-16 | Deprecated | 2026-11-15 | — |
-| gpt-4.1 | 2025-04-14 | Legacy | 2027-04-14 | — |
-| gpt-4.1-mini | 2025-04-14 | Legacy | 2027-04-14 | — |
-| gpt-4.1-nano | 2025-04-14 | Legacy | 2027-04-14 | — |
-| gpt-4o | 2024-05-13 | Deprecated | 2026-10-01 | gpt-5.1 |
+| gpt-4.1 | 2025-04-14 | Deprecated | 2027-04-14 | — |
+| gpt-4.1-mini | 2025-04-14 | Deprecated | 2027-04-14 | — |
+| gpt-4.1-nano | 2025-04-14 | Deprecated | 2027-04-14 | — |
+| gpt-4o | 2024-05-13 | Deprecated | 2026-12-09 | gpt-5.6-sol |
 | gpt-4o | 2024-08-06 | Deprecated | 2027-04-14 | gpt-5.1 |
 | gpt-4o | 2024-11-20 | Legacy | 2027-04-14 | gpt-5.1 |
 | gpt-4o-mini | 2024-07-18 | Deprecated | 2027-04-14 | — |
@@ -233,17 +233,17 @@ Microsoft Foundry offers Claude models in [two versions](../../foundry-models/co
 | claude-sonnet-5 | 2 | GA | 2027-06-30 | — |
 | claude-sonnet-5 | 1 | GA | 2027-06-30 | — |
 | claude-sonnet-4-6 | 1 | GA | 2027-02-10 | — |
-| claude-sonnet-4-5 | 1 | GA | 2026-10-19 | — |
+| claude-sonnet-4-5 | 1 | GA | 2026-11-30 | claude-sonnet-5-5 |
 | claude-opus-5 | 2 | GA | 2027-07-08 | — |
 | claude-opus-5 | 1 | GA | 2027-07-08 | — |
 | claude-opus-4-8 | 2 | GA | 2027-09-01 | — |
 | claude-opus-4-8 | 1 | GA | 2027-09-01 | — |
 | claude-opus-4-7 | 1 | GA | 2027-04-06 | — |
 | claude-opus-4-6 | 1 | GA | 2027-02-02 | — |
-| claude-opus-4-5 | 1 | GA | 2026-10-19 | — |
+| claude-opus-4-5 | 1 | GA | 2026-11-24 | — |
 | claude-opus-4-1 | — | Retired | 2026-08-05 | claude-opus-5 |
-| claude-haiku-4-5 | 1 | GA | 2026-10-19 | — |
-| claude-haiku-4-5 | 2 | GA | 2026-10-19 | — |
+| claude-haiku-4-5 | 1 | GA | 2026-11-15 | — |
+| claude-haiku-4-5 | 2 | GA | 2026-11-15 | — |
 | claude-fable-5-1 | 1 | Preview | 2027-12-05 | — |
 | claude-fable-5 | 1 | Preview | 2027-12-05 | — |
 | claude-mythos-5-1 | 1 | Preview | — | — |

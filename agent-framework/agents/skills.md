@@ -5,7 +5,7 @@ zone_pivot_groups: programming-languages
 author: SergeyMenshykh
 ms.topic: article
 ms.author: semenshi
-ms.date: 09/18/2026
+ms.date: 10/02/2026
 ms.service: agent-framework
 ai-usage: ai-assisted
 ---
@@ -440,6 +440,13 @@ skills_provider = SkillsProvider.from_paths(
 ```
 
 The runner receives the resolved `FileSkill`, `FileSkillScript`, and an optional `args` argument. File-based scripts expect arguments as a JSON array of strings - each array element becomes a positional command-line argument. Scripts are automatically discovered from `.py` files in the `scripts/` subdirectory of each skill directory.
+
+To access host runtime values, add one keyword-bindable runner parameter
+annotated directly as `FunctionInvocationContext` or
+`FunctionInvocationContext | None`. The parameter must have a default value
+and must not replace the existing `skill`, `script`, or `args` parameters.
+Making it keyword-only is the recommended shape. The provider injects the
+context, but doesn't add its values to the subprocess arguments or environment.
 
 > [!WARNING]
 > The runner above is provided for **demonstration purposes only**. For production use, consider adding:
@@ -969,6 +976,8 @@ var skillsProvider = new AgentSkillsProviderBuilder()
 - `ArchiveMaxSizeBytes` - Maximum download size per archive. Defaults to `1 MB`.
 - `ArchiveMaxUncompressedSizeBytes` - Maximum total uncompressed size per archive. Defaults to `1 MB`.
 
+If multiple archive members resolve to the same extracted file, the Agent Framework keeps the first member's content, skips later colliding members with a warning, and continues skill discovery.
+
 > [!IMPORTANT]
 > Scripts bundled in archive-type skills are **never executed**. This is a deliberate security measure - executable content from remote MCP servers requires explicit trust.
 
@@ -1029,6 +1038,8 @@ allowed. Digest verification applies only to `archive` entries, not
 consistency with the index, not that the MCP server is trustworthy.
 
 `MCPSkillsSource` extracts ZIP content in memory. Use its `archive_*` constructor options to restrict resource extensions, search depth, file count, download size, and total uncompressed size. Scripts in MCP archives are available only as read-only resources and are never exposed as runnable scripts.
+
+Archive member paths are normalized and compared case-insensitively, matching resource lookup. If multiple members resolve to the same path, Agent Framework keeps the first member's spelling and content, logs a warning, and continues loading the remaining archive content.
 
 > [!NOTE]
 > If `skill://index.json` is absent, unreadable, empty, or fails to parse, the source returns an empty list. Agent Framework skips index entry types other than `skill-md` and `archive`.
@@ -1966,11 +1977,13 @@ internal sealed class WeightConverterSkill : AgentClassSkill<WeightConverterSkil
 
 :::zone pivot="programming-language-python"
 
-Resource and script functions that accept `**kwargs` receive host-supplied
-runtime keyword arguments passed to `agent.run()`. Resource functions receive
-only these runtime arguments. Script functions merge them with entries from the
-model-supplied `args` mapping, so don't treat a value in a script's `**kwargs`
-as proof that the host supplied it.
+Resource functions that accept `**kwargs` receive host-supplied runtime keyword
+arguments passed to `agent.run()`. For scripts, prefer an injected
+`FunctionInvocationContext` when host values must remain separate from
+model-supplied arguments. Existing script functions that accept `**kwargs`
+continue to merge runtime values with entries from the model-supplied `args`
+mapping, so don't treat a value in a script's `**kwargs` as proof that the host
+supplied it.
 
 ### Passing runtime arguments
 
@@ -1982,6 +1995,50 @@ response = await agent.run(
     function_invocation_kwargs={"precision": 2, "user_id": "alice"},
 )
 ```
+
+### Use invocation context for host-only values
+
+Declare one keyword-bindable script parameter as
+`FunctionInvocationContext` to receive the current invocation. The parameter is
+hidden from the script schema, so the model can't supply it.
+
+```python
+import json
+
+from agent_framework import (
+    FunctionInvocationContext,
+    InlineSkill,
+    SkillFrontmatter,
+)
+
+converter_skill = InlineSkill(
+    frontmatter=SkillFrontmatter(
+        name="unit-converter",
+        description="Convert units with a supplied conversion factor.",
+    ),
+    instructions="Use the convert script to perform unit conversions.",
+)
+
+
+@converter_skill.script(name="convert")
+def convert_units(
+    value: float,
+    factor: float,
+    *,
+    ctx: FunctionInvocationContext,
+) -> str:
+    precision = ctx.kwargs["precision"]
+    result = round(value * factor, precision)
+    return json.dumps({"value": value, "factor": factor, "result": result})
+```
+
+You can choose the parameter name. Annotate it directly as
+`FunctionInvocationContext` or `FunctionInvocationContext | None`. The
+framework doesn't recognize metadata wrappers such as `Annotated[...]` for
+context injection. Custom `SkillScript.run()` implementations opt in by using
+the same annotation on their `run()` method. Unannotated implementations retain
+the existing behavior of receiving host runtime values as individual keyword
+arguments.
 
 ### Code-defined skills with kwargs
 

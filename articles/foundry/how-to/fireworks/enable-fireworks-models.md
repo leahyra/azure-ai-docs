@@ -5,7 +5,7 @@ description: Learn how to enable, deploy, and use Fireworks models in Microsoft 
 author: ssalgadodev 
 ms.author: ssalgado
 manager: mcleans
-ms.date: 09/18/2026
+ms.date: 10/01/2026
 ms.service: microsoft-foundry
 ms.subservice: foundry-model-inference
 ms.topic: how-to
@@ -25,6 +25,8 @@ Through integration with [Fireworks AI](https://fireworks.ai/), Microsoft Foundr
 All of these capabilities are available directly within your Foundry project, with Azure governance, access controls, and project management built in.
 
 ## Prerequisites
+
+<!-- TODO(PM): Reconcile Foundry Owner here, Azure AI Developer in troubleshooting, and Cognitive Services Contributor in the import guide; retain existing role claims until approved. -->
 
 * An Azure subscription. If you don't have one, create a [free account](https://azure.microsoft.com/pricing/purchase-options/azure-account?cid=msft_learn).
 * A [Foundry resource](/azure/ai-foundry/how-to/create-azure-ai-resource) with a [Foundry project](../../how-to/create-projects.md).
@@ -98,7 +100,7 @@ After the feature is enabled, you can deploy Fireworks models from the Foundry m
    * **Deployment name**: Keep the default name or enter a custom name to identify the deployment.
    * **Token Plan**: Select **Pay-per-token** -> Datazone Standard or Global Standard, depending on the model, or **Provisioned Throughput** -> Datazone or Global. For more information, see [Deployment types](../../foundry-models/concepts/deployment-types.md#deployment-type-comparison).
    * **Model version settings**: Select the model version for the deployment.
-   * **Tokens per Minute Rate Limit**:  Set a custom tokens-per-minute limit to manage costs and control usage. The default value is based on the model's typical performance and cost profile.
+   * **Tokens per Minute Rate Limit**: Set a custom tokens-per-minute limit to manage costs and control usage. For pay-per-token deployments, see [Quotas and rate limits](#quotas-and-rate-limits).
    * **Guardrails**: Select **DefaultV2** or **Default** guardrail configuration. Models use the **Microsoft.DefaultV2** guardrail unless a different one is specified. For more information, see [Use guardrails to set boundaries on model outputs](../../guardrails/guardrails-overview.md).
 
 1. Select **Deploy**. The deployment process can take up to 30 minutes.
@@ -107,6 +109,16 @@ After the feature is enabled, you can deploy Fireworks models from the Foundry m
 
    > [!TIP]
    > To verify the deployment, navigate to your project's **Deployments** page and confirm the deployment **Status** shows **Succeeded**.
+
+## Quotas and rate limits
+
+For pay-per-token deployments, Global Standard and Data Zone Standard have separate quota pools. Enterprise customers have a default quota of 10 million tokens per minute (TPM) per region, per subscription, in each pool. Each pool is shared across all Fireworks models, and you can allocate quota to individual model deployments.
+
+Fireworks directly enforces adaptive rate limits within your quota. Your effective limits can be lower than the full quota and adjust automatically as your usage grows.
+
+Ramp up traffic gradually, and use exponential backoff when retrying HTTP 429 (Too Many Requests) responses. For more information, see [Fireworks adaptive rate limits](https://docs.fireworks.ai/serverless/rate-limits).
+
+All customers can submit a [quota increase request](https://aka.ms/fireworks-quota) for more quota.
 
 ## Improve prompt cache hit rate
 
@@ -238,7 +250,7 @@ No, you need to create new deployments in Foundry. If you'd like to shift consum
 
 ### Can I deploy LoRA or adapter-based models?
 
-LoRA support is in public preview. See [import custom Fireworks modesl](./import-custom-models.md) for details.
+LoRA support is in public preview. See [import custom Fireworks models](./import-custom-models.md) for details. For compatible adapters trained in Foundry, see [Deploy fine-tuned models with Fireworks on Foundry (preview)](../../fine-tuning/deploy-fine-tuned-models.md#deploy-with-fireworks-on-foundry-preview); use the import guide for adapters trained elsewhere.
 
 ### How do I import and deploy a custom model?
 
@@ -272,6 +284,8 @@ For other queries, see the [frequently asked questions](#frequently-asked-questi
 
 ## Related content
 
+* [Fine-tuning overview](../../fine-tuning/overview.md)
+* [Deploy fine-tuned models with Fireworks on Foundry (preview)](../../fine-tuning/deploy-fine-tuned-models.md#deploy-with-fireworks-on-foundry-preview)
 * [Import custom models into Foundry](import-custom-models.md)
 * [Deploy Foundry Models in the portal](../../foundry-models/how-to/deploy-foundry-models.md)
 * [Foundry Models from partners and community](../../foundry-models/concepts/models-from-partners.md)

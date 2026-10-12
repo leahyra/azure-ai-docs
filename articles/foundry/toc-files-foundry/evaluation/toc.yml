@@ -1,7 +1,11 @@
 items:
 # Fundamentals
+- name: Permissions for evaluation workflows
+  href: ../../observability/how-to/evaluation-permissions.md
 - name: Rate limits and regions
   href: ../../concepts/evaluation-regions-limits-virtual-network.md
+- name: Virtual network support 
+  href: ../../concepts/evaluation-virtual-network.md
 - name: Safety evaluations transparency note
   href: ../../concepts/safety-evaluations-transparency-note.md
 
@@ -72,6 +76,8 @@ items:
          href: ../../observability/how-to/cloud-evaluation-deployed-conversations.md
        - name: Simulate agent conversations
          href: ../../observability/how-to/cloud-evaluation-simulate-conversations.md
+     - name: Generate and evaluate synthetic conversations
+       href: ../../observability/how-to/cloud-evaluation-synthetic-conversations.md
      - name: Get evaluation results
        href: ../../observability/how-to/cloud-evaluation-results.md
      - name: Use admin-connected models

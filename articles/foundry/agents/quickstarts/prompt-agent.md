@@ -7,7 +7,7 @@ ms.date: 09/09/2026
 ms.service: microsoft-foundry
 ms.subservice: foundry-agent-service
 ms.topic: quickstart
-ms.custom: update-code8
+ms.custom: update-code9
 ai-usage: ai-assisted
 # customer intent: As a developer, I want to create a prompt agent in Foundry Agent Service so that I can build AI-powered automation.
 ---
@@ -15,6 +15,9 @@ ai-usage: ai-assisted
 # Quickstart: Create a prompt agent
 
 In this quickstart, you create a prompt agent in Foundry Agent Service and have a conversation with it. A prompt agent is a declaratively defined agent that combines a model from the Foundry model catalog, instructions, tools, and natural language prompts to drive behavior.
+
+> [!TIP]
+> For a managed real-time voice experience, use a [voice-based prompt agent](prompt-voice-agent.md). Voice-based prompt agents use Voice Live for spoken conversations and don't require you to host the voice orchestration code.
 
 If you don't have an Azure subscription, create a [free account](https://azure.microsoft.com/pricing/purchase-options/azure-account?cid=msft_learn).
 
@@ -54,7 +57,7 @@ Create a prompt agent using your deployed model. The agent uses a `PromptAgentDe
 
 # [Java](#tab/java)
 
-:::code language="java" source="~/foundry-samples-main/samples/java/quickstart/create-agent/src/main/java/com/azure/ai/agents/CreateAgent.java":::
+:::code language="java" source="~/foundry-samples-main/samples/java/quickstart/create-agent/src/main/java/com/azure/ai/foundry/samples/CreateAgent.java":::
 
 # [REST API](#tab/rest)
 
@@ -84,7 +87,7 @@ Use the agent you created to interact by asking a question and a related follow-
 
 # [Java](#tab/java)
 
-:::code language="java" source="~/foundry-samples-main/samples/java/quickstart/chat-with-agent/src/main/java/com/azure/ai/agents/ChatWithAgent.java":::
+:::code language="java" source="~/foundry-samples-main/samples/java/quickstart/chat-with-agent/src/main/java/com/azure/ai/foundry/samples/ChatWithAgent.java":::
 
 # [REST API](#tab/rest)
 

@@ -7,6 +7,7 @@ ms.service: microsoft-foundry
 ms.topic: include
 ms.date: 03/19/2026
 ms.custom: include, classic-and-new
+ai-usage: ai-assisted
 ---
 
 [!INCLUDE [non-english-translation](non-english-translation.md)]
@@ -75,6 +76,7 @@ Key features of Agent Service include:
 1. **Integrate with extensive memory and knowledge connectors:** Agents need to manage conversation state and connect with internal and external knowledge sources to have the right context to complete a process.
 1. **Flexible model choice:** Agents built with the appropriate model for their tasks can enable better integration of information from multiple data types, yield better results for task-specific scenarios, and improve cost efficiencies in scaled deployments.
 1. **Built-in enterprise readiness:** Agents need to be able to support an organization's unique data privacy and compliance needs, scale with an organization's needs, and complete tasks reliably and with high quality.
+1. **Voice-enabled agents:** Developers can add speech input and output capabilities to Foundry agents by using Voice Live. For intended uses, capabilities, limitations, risks, and considerations specific to Voice Live, see the [Voice Live Transparency Note](/azure/foundry/responsible-ai/speech-service/voice-live/transparency-note).
 
 ### Extensibility capabilities 
 
@@ -105,7 +107,7 @@ Developers can connect an Agent to external systems, APIs, and services through 
 * **Computer Use**: (a tool to perform tasks by interacting with computer systems and applications through their UIs)   
 * **Browser Automation Tool** (a tool that can perform real-world browser tasks through natural language prompts, enabling automated browsing activities without human intervention in the middle)
 * **Image Generation** (a tool to generate and edit images)
-* **Agent2Agent** (a custom service connected using the agent-to-agent protocol through an existing agent endpoint to a Foundry agent). 
+* **Agent2Agent** (a Foundry or non-Foundry agent connected using the agent-to-agent protocol through an existing agent endpoint to a Foundry agent).
 
 #### Orchestrating multi-agent systems
 
@@ -130,9 +132,10 @@ Agent Service is **flexible and use-case agnostic.** This presents multiple poss
 * **Government: Citizen Request Triage and Community Event Coordination:** A city clerk uses an agent to categorize incoming service requests (for example, pothole repairs), assign them to the right departments, and compile simple status updates; officials review and finalize communications to maintain transparency and accuracy.
 * **Education: Assisting with Research and Reference Gathering:** A teacher relies on an agent to gather age-appropriate articles and resources from reputable sources for a planetary science lesson; the teacher verifies the materials for factual accuracy and adjusts them to fit the curriculum, ensuring students receive trustworthy content.
 * **Manufacturing: Inventory Oversight and Task Scheduling:** A factory supervisor deploys an agent to monitor inventory levels, schedule restocking when supplies run low, and optimize shift rosters; management confirms the agent’s suggestions and retains final decision-making authority.
-* **Deep Research Tool**: Learn more about intended uses, capabilities, limitations, risks, and considerations when choosing a use case model with deep research technology in the [Azure OpenAI transparency note](/azure/ai-foundry/responsible-ai/openai/transparency-note?tabs=text).
-* **Computer Use**:  The Computer Use tool comes with additional significant security and privacy risks, including prompt injection attacks. Learn more about intended uses, capabilities, limitations, risks, and considerations when choosing a use case in the [Azure OpenAI transparency note](../openai/transparency-note.md?tabs=image). 
-* **Image Generation Tool**: The Image Generation tool is empowered by the gpt-image-1 model. Learn more about intended uses, capabilities, limitations, risks, and considerations when choosing a use case model in the [Azure OpenAI transparency note](/azure/ai-foundry/responsible-ai/openai/transparency-note?branch=main&tabs=image).
+* **Deep Research Tool**: Learn more about intended uses, capabilities, limitations, risks, and considerations when choosing a use case model with deep research technology in the [Azure OpenAI transparency note](/azure/foundry/responsible-ai/openai/transparency-note).
+* **Computer Use**:  The Computer Use tool comes with significant security and privacy risks, including prompt injection attacks. Learn more about intended uses, capabilities, limitations, risks, and considerations when choosing a use case in the [Azure OpenAI transparency note](/azure/foundry/responsible-ai/openai/transparency-note). 
+* **Image Generation Tool**: The Image Generation tool is empowered by the gpt-image-1 model. Learn more about intended uses, capabilities, limitations, risks, and considerations when choosing a use case model in the [Azure OpenAI transparency note](/azure/foundry/responsible-ai/openai/transparency-note).
+* **Voice Live/Voice Agent**: Agents using Voice Live can support real-time speech-to-speech experiences. Learn more about intended uses, capabilities, limitations, risks, and considerations when choosing a use case in the [Voice Live Transparency Note](/azure/foundry/responsible-ai/speech-service/voice-live/transparency-note).
 
 #### Considerations when choosing a use case
 
@@ -155,6 +158,7 @@ We encourage customers to use Agent Service in their innovative solutions or app
 * **Unequal representation and support:** When serving diverse user groups, AI Agents can show uneven performance if language varieties, regional data, or specialized knowledge domains are underrepresented. A retail agent, for example, might offer less reliable product recommendations to customers who speak under-represented languages.
 * **Opaque decision-making processes:** As agents combine large language models with external systems, tracing the “why” behind their decisions can become challenging. A user using such an agent may find it difficult to understand why certain tools or combination of tools were chosen to answer a query, complicating trust and verification of the agent’s outputs or actions.
 * **Evolving best practices and standards:** Agents are an emerging technology, and guidance on safe integration, transparent tool usage, and responsible deployment continues to evolve. Keeping up with the latest best practices and auditing procedures is crucial, as even well-intentioned uses can become risky without ongoing review and refinement.
+* **Voice Live/Voice Agent limitations:** Agents using Voice Live are also subject to limitations associated with natural language and speech models. See the [Voice Live Transparency Note](/azure/foundry/responsible-ai/speech-service/voice-live/transparency-note) for additional limitations and responsible AI considerations.
 
 ## System performance
 
@@ -166,6 +170,7 @@ We encourage customers to use Agent Service in their innovative solutions or app
     - [Task adherence](https://aka.ms/taskadherence-sample): Measures how well the agent’s final response adheres to its assigned tasks, according to its system message and prior steps. 
 * **Provide trusted data:** Retrieving or uploading untrusted data into your systems could compromise the security of your systems or applications. To mitigate these risks in your applications using Agent Service, we recommend logging and monitoring LLM interactions (inputs/outputs) to detect and analyze potential prompt injections, clearly delineating user input to minimize risk of prompt injection, restricting the LLM’s access to sensitive resources, limiting its capabilities to the minimum required, and isolating it from critical systems and resources. Learn about additional mitigation approaches in [Security guidance for Large Language Models.](/ai/playbook/technology-guidance/generative-ai/mlops-in-openai/security/security-recommend)
 * **Choose and integrate tools thoughtfully:** Select tools that are stable, well-documented, and suited to the agent’s intended uses and objectives. For instance, use a reliable database connector for factual lookups or a well-tested API for executing specific actions. Limit the number of tools to those that genuinely enhance functionality and specify how and when the agent should use them.
+* **When using Agent2Agent (A2A), treat connected agents, particularly non-Foundry agents, as external trust boundaries:** Validate the data exchanged, apply appropriate authentication and least-privilege access, and assess the risk of prompt injection and unintended disclosure of sensitive data.
 * **Provide user proactive controls for system boundaries:** Consider creating user controls to give users operating the AI agent the ability to proactively set boundaries on what actions or tools are permitted, and what domains the agent can operate in.
 * **Establish real-time oversight and human-in-the-loop processes:** Consider providing users with adequate real-time controls to authorize, verify, review, and approve agentic system behavior, including actions, planned tasks, operating environments or domain boundaries, and knowledge or action tool access. Particularly for critical or high-stakes tasks, consider incorporating mandatory human review and approval steps by the user. Ensure that a user or human operator can easily intervene, correct, or override the agent’s decisions, especially when those decisions have safety or legal implications. For more information, see [Overreliance on AI](/ai/playbook/technology-guidance/overreliance-on-ai/overreliance-on-ai?wt.mc_id=reliance_v1_multichannel_cnl_csadai).
 * **Ensure intelligibility and traceability for human decision-making**: Provide users with information before, during, and after actions are taken to help them understand justifications for decisions, identify where to intervene, and troubleshoot issues. Incorporate instrumentation or logging within the system, such as OpenTelemetry traces from Agent Service, to trace outputs, including prompts, model steps, and tool calls. This enables reconstruction of the agent’s reasoning process, isolation of issues, tuning of prompts, refinement of tool integration, and verification of guideline adherence. For more information, see [Tracing using Application Insights](/azure/ai-services/agents/concepts/tracing).

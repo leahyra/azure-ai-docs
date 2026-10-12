@@ -6,7 +6,7 @@ author: ssalgadodev
 manager: nitinme
 ms.service: azure-ai-content-safety
 ms.topic: concept-article
-ms.date: 9/17/2026
+ms.date: 09/17/2026
 ms.author: ssalgado
 ai-usage: ai-assisted
 ---
@@ -110,7 +110,7 @@ The following models support invisible watermarking for text output.
 
 | Model Provider | Models |
 | --- | --- |
-| Anthropic | Claude Fable 5.1<br>Claude Mythos 5.1<br>Claude Opus 5 |
+| Anthropic | Claude Fable 5.1<br>Claude Mythos 5.1<br>Claude Opus 5<br>Claude Opus 5.5 |
 
 ## What are the limitations?  
 Content provenance technologies can improve transparency around AI-generated content, but it's important to understand their limitations. 

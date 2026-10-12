@@ -4,7 +4,7 @@ description: "Attach Responsible AI content safety and network egress guardrail 
 author: amitbhave
 ms.author: amitbhave
 ms.manager: pranavp
-ms.date: 09/16/2026
+ms.date: 09/24/2026
 ms.topic: how-to
 ms.service: microsoft-foundry
 ms.subservice: foundry-agent-service
@@ -22,6 +22,8 @@ This article shows you how to attach guardrails to a hosted agent in Microsoft F
 
 You reference the guardrail by its RAI policy resource ID on the agent definition. You can attach it when you deploy by using the Azure Developer CLI (`azd`), the Python SDK, or the REST API. The same attach steps apply to both kinds of guardrails. To learn what guardrails are, the risks they detect, and how to create one, see [Guardrails and controls overview](../../guardrails/guardrails-overview.md).
 
+If your agent uses the `invocations` protocol, attaching a policy isn't enough on its own. You also declare where the text to screen lives in your request and response bodies. See [Add a guardrail to an agent that uses the invocations protocol](#add-a-guardrail-to-an-agent-that-uses-the-invocations-protocol).
+
 ## Prerequisites
 
 * A [Microsoft Foundry project](../../how-to/create-projects.md).
@@ -32,11 +34,17 @@ You reference the guardrail by its RAI policy resource ID on the agent definitio
     /subscriptions/<subscription-id>/resourceGroups/<resource-group>/providers/Microsoft.CognitiveServices/accounts/<account>/raiPolicies/<policy-name>
     ```
 
-* For the Azure Developer CLI method: the `azd ai agent` extension, version 1.0.0-beta.1 or later.
+* For the Azure Developer CLI method: the `azd ai agent` extension, version 1.0.0-beta.12 or later.
 * For the Python SDK method: the [Azure AI Projects client library](/python/api/overview/azure/ai-projects-readme) for Python, version 2.2.0 or later:
 
     ```bash
     pip install "azure-ai-projects>=2.2.0"
+    ```
+
+    To configure moderation for the `invocations` protocol, use version 2.7.0 or later:
+
+    ```bash
+    pip install "azure-ai-projects>=2.7.0"
     ```
 
 ## How guardrails apply to hosted agents
@@ -52,7 +60,24 @@ Always use the full ARM resource ID for `rai_policy_name`, not the bare policy n
 
 `rai_config` is the shape the Foundry API accepts, so the Python SDK and REST examples in this article set it directly. The Azure Developer CLI doesn't expose `rai_config` in `azure.yaml`; it uses a `policies` list instead and maps it to `rai_config` when it deploys.
 
-## Add a guardrail with the Azure Developer CLI
+### Protocol differences
+
+How much configuration a guardrail needs depends on the protocol your agent exposes:
+
+| Protocol | Configuration |
+| --- | --- |
+| `responses` | Set `rai_policy_name`. The platform knows the request and response shapes, so it locates the text to screen on its own. |
+| `invocations` | Set `rai_policy_name` **and** `invocations_moderation`. Request and response bodies are defined by your agent, so you declare where the text lives. |
+| `invocations_ws` | Content safety moderation isn't available. |
+
+> [!IMPORTANT]
+> On the `invocations` protocol, a policy attached without `invocations_moderation` is inert. The platform has no way to find the text in your custom body shapes, so it doesn't screen anything and requests pass through unfiltered. The agent still deploys and returns `HTTP 200`, which makes the gap easy to miss.
+
+## Add a guardrail
+
+Choose the method you use to deploy the agent. These examples attach a guardrail to an agent on the `responses` protocol. On the `invocations` protocol, you also need moderation settings, which [Add a guardrail to an agent that uses the invocations protocol](#add-a-guardrail-to-an-agent-that-uses-the-invocations-protocol) covers.
+
+### [Azure Developer CLI](#tab/azd)
 
 When you use `azd`, declare the guardrail in the `policies` list on the `azure.ai.agent` service in `azure.yaml`. Add an entry with `type: rai_policy` and set `raiPolicyName` to the full ARM resource ID of the RAI policy. When you deploy, `azd` maps that entry to `rai_config.rai_policy_name` on the agent definition it sends to Foundry.
 
@@ -86,7 +111,7 @@ The platform attaches the guardrail when it creates the agent version.
 > [!NOTE]
 > In `azure.yaml` the field is camelCased as `raiPolicyName`. The deprecated standalone `agent.yaml` uses the snake_case `rai_policy_name`. Both map to `rai_config.rai_policy_name` on the agent version. Don't declare the guardrail in `agent.manifest.yaml` - `azd` reads that file only during `azd ai agent init` and ignores it at deploy time.
 
-## Add a guardrail with the Python SDK
+### [Python SDK](#tab/python)
 
 When you create an agent version with the SDK, pass a `RaiConfig` to the `rai_config` parameter of `HostedAgentDefinition`.
 
@@ -140,7 +165,7 @@ print(f"Agent created: {agent.name}, version: {agent.version}")
 
 Reference: [HostedAgentDefinition](/python/api/azure-ai-projects/azure.ai.projects.models.hostedagentdefinition), [ContainerConfiguration](/python/api/azure-ai-projects/azure.ai.projects.models.containerconfiguration), and [RaiConfig](/python/api/azure-ai-projects/azure.ai.projects.models.raiconfig).
 
-## Add a guardrail with the .NET SDK
+### [.NET SDK](#tab/dotnet)
 
 When you create an agent version with the .NET SDK, set the `ContentFilterConfiguration` property on `HostedAgentDefinition`. Install the prerelease package with `dotnet add package Azure.AI.Projects.Agents --prerelease`.
 
@@ -175,7 +200,7 @@ ProjectsAgentVersion agent = agentsClient.CreateAgentVersion(
 Console.WriteLine($"Agent created: {agent.Name}, version: {agent.Version}");
 ```
 
-## Add a guardrail with the JavaScript/TypeScript SDK
+### [JavaScript/TypeScript SDK](#tab/javascript)
 
 When you create an agent version with the SDK, add an `rai_config` object with a `rai_policy_name` field to the hosted agent definition.
 
@@ -218,7 +243,7 @@ console.log(`Agent created: ${agent.name}, version: ${agent.version}`);
 
 Reference: [AIProjectClient](/javascript/api/overview/azure/ai-projects-readme)
 
-## Add a guardrail with the REST API
+### [REST API](#tab/rest)
 
 When you create the agent over REST, include a `rai_config` object in the `definition`.
 
@@ -248,6 +273,8 @@ curl -X POST "$BASE_URL/agents?api-version=$API_VERSION" \
     }
   }'
 ```
+
+---
 
 ## Verify the guardrail is applied
 
@@ -303,6 +330,248 @@ A prompt that passes the policy returns `HTTP 200` with the agent's response. If
 
 The guardrail applies to streaming requests too. By using `"stream": true`, a violating prompt is rejected with the same `HTTP 400` before any event is emitted.
 
+## Add a guardrail to an agent that uses the invocations protocol
+
+On the `responses` protocol, the platform knows the request and response shapes, so `rai_policy_name` is all you need. The `invocations` protocol accepts request and response bodies that your agent defines, so the platform can't tell which fields hold user or agent text. Add an `invocations_moderation` object to `rai_config` that declares where the text lives.
+
+Until you do, the policy is attached but screens nothing.
+
+### Moderation settings
+
+| Setting | Required | Description |
+| --- | --- | --- |
+| `response_mode` | Yes | The response shapes your agent can produce: `non_streaming`, `streaming`, or `both`. |
+| `input_content_type` | No | How to parse the request body: `json` (default) or `text`. |
+| `output_content_type` | No | How to parse the response body: `json` (default) or `text`. |
+| `input_paths` | When `input_content_type` is `json` | Path expressions that select the user text in the request body. |
+| `output_paths` | When `response_mode` is `non_streaming` or `both`, and `output_content_type` is `json` | Path expressions that select the agent text in a buffered response body. |
+| `stream_selectors` | When `response_mode` is `streaming` or `both`, and `output_content_type` is `json` | Pairs of `event_type` and `text_field` that locate text in streamed events. |
+
+Set `input_content_type` or `output_content_type` to `text` when that body is plain text. The platform then screens the body itself and you don't provide paths for that direction.
+
+You can attach only one RAI policy to an agent, so `invocations_moderation` applies to that single policy.
+
+#### Path expressions
+
+`input_paths` and `output_paths` accept `$` for the document root, dot notation for members, array indexes, and `[*]` wildcards. For example, `$.messages[*].content` selects the `content` field of every element in the `messages` array. When a path selects several values, the platform joins them and screens them together.
+
+#### Stream selectors
+
+For a streamed response, the platform reads the `type` field of each event and compares it to `event_type`. On a match, it reads the field named by `text_field` and screens that text.
+
+Both `event_type` and `text_field` are exact, case-sensitive matches against top-level properties of the event's JSON payload. You can't select a nested field.
+
+`text_field` is a field name, not a path expression. Use `content`, not `$.content`.
+
+An event whose `type` matches no selector, or whose `text_field` names no property, contributes no text. That event's content goes unscreened, and if no selector ever yields text, the response isn't screened at all. When you omit `text_field`, the platform uses `delta`.
+
+#### Response modes
+
+`response_mode` declares the shapes your agent can return. It applies only to output: input screening runs regardless of the value you set. For output, the platform inspects the response `Content-Type` and runs one check, using the streaming check for `text/event-stream` and the buffered check otherwise.
+
+Declare every shape your agent can return. A successful response that carries content in a shape you didn't declare is rejected with `HTTP 502` rather than skipping moderation. Use `both` only when your agent genuinely answers both ways.
+
+Output screening applies to successful responses that carry content. The platform doesn't screen error responses from your container or empty acknowledgments.
+
+#### Limits
+
+Content safety screening has bounds that affect large payloads:
+
+| Limit | Behavior |
+| --- | --- |
+| Request body larger than 2 MB | Forwarded to your agent without input screening. |
+| Buffered response body larger than 1 MB | Rejected with `HTTP 502`. The response never reaches the client. |
+| Text longer than 10,000 characters in a single check | Truncated before analysis. |
+
+The platform also forwards a request unscreened when it can't parse the body as JSON or when `input_paths` selects nothing. Confirm your paths match your real request bodies rather than assuming a deployed policy is screening them.
+
+### Add the moderation settings
+
+Choose the method you use to deploy the agent.
+
+#### [Azure Developer CLI](#tab/azd-invocations)
+
+Add an `invocationsModeration` block to the `rai_policy` entry in `azure.yaml`. These settings use camel case, and `azd` maps them to the snake case names that the API accepts.
+
+1. In your `azure.yaml`, add `invocationsModeration` to the `rai_policy` entry. This example screens the `message` field of the request. The agent streams events shaped like `{"type": "token", "content": "..."}` and a final `{"type": "done", "full_text": "..."}`.
+
+    ```yaml
+    services:
+      my-agent:
+        host: azure.ai.agent
+        project: src/my-agent
+        kind: hosted
+        name: my-hosted-agent
+        policies:
+          - type: rai_policy
+            raiPolicyName: /subscriptions/<subscription-id>/resourceGroups/<resource-group>/providers/Microsoft.CognitiveServices/accounts/<account>/raiPolicies/<policy-name>
+            invocationsModeration:
+              responseMode: streaming
+              inputPaths:
+                - $.message
+              streamSelectors:
+                - eventType: token
+                  textField: content
+                - eventType: done
+                  textField: full_text
+        protocols:
+          - protocol: invocations
+            version: "2.0.0"
+    ```
+
+1. Deploy the agent:
+
+    ```bash
+    azd deploy
+    ```
+
+    The platform applies the moderation settings when it creates the agent version.
+
+`azd` checks the block before it deploys, so a structural mistake fails locally instead of at runtime. For example, declaring moderation on an agent that doesn't expose the `invocations` protocol returns:
+
+```output
+policies[0] invocationsModeration is only supported for agents that expose the 'invocations' protocol; add it to 'protocols' or remove the moderation block
+```
+
+These checks cover structure, not meaning. `azd` can't tell whether your paths and field names match the bodies your agent actually sends, so verify that yourself with the test in [Test the moderation settings](#test-the-moderation-settings).
+
+#### [Python SDK](#tab/python-invocations)
+
+> [!NOTE]
+> `invocations_moderation` requires `azure-ai-projects` version 2.7.0 or later.
+
+Pass a `RaiInvocationModeration` object to the `invocations_moderation` parameter of `RaiConfig`.
+
+```python
+from azure.ai.projects.models import (
+    RaiConfig,
+    RaiInvocationMode,
+    RaiInvocationModeration,
+    RaiSseTextSelector,
+)
+
+rai_config = RaiConfig(
+    rai_policy_name=RAI_POLICY_ID,
+    invocations_moderation=RaiInvocationModeration(
+        response_mode=RaiInvocationMode.STREAMING,
+        input_paths=["$.message"],
+        stream_selectors=[
+            RaiSseTextSelector(event_type="token", text_field="content"),
+            RaiSseTextSelector(event_type="done", text_field="full_text"),
+        ],
+    ),
+)
+```
+
+Pass `rai_config` to `HostedAgentDefinition` as shown in [Add a guardrail](#add-a-guardrail), and set `protocol_versions` to the `invocations` protocol.
+
+#### [REST API](#tab/rest-invocations)
+
+Include `invocations_moderation` in the `rai_config` object of the agent definition.
+
+```json
+{
+  "name": "my-agent",
+  "definition": {
+    "kind": "hosted",
+    "container_configuration": {
+      "image": "myacr.azurecr.io/my-agent:v1"
+    },
+    "cpu": "1",
+    "memory": "2Gi",
+    "protocol_versions": [
+      {"protocol": "invocations", "version": "2.0.0"}
+    ],
+    "rai_config": {
+      "rai_policy_name": "/subscriptions/<subscription-id>/resourceGroups/<resource-group>/providers/Microsoft.CognitiveServices/accounts/<account>/raiPolicies/<policy-name>",
+      "invocations_moderation": {
+        "response_mode": "streaming",
+        "input_paths": ["$.message"],
+        "stream_selectors": [
+          {"event_type": "token", "text_field": "content"},
+          {"event_type": "done", "text_field": "full_text"}
+        ]
+      }
+    }
+  }
+}
+```
+
+To confirm the settings were applied, get the agent version and inspect `definition.rai_config.invocations_moderation`:
+
+```bash
+curl -s -X GET "$BASE_URL/agents/my-agent/versions/1?api-version=$API_VERSION" \
+  -H "Authorization: ******" | jq '.definition.rai_config.invocations_moderation'
+```
+
+---
+
+### What a blocked invocation looks like
+
+The response to a blocked request depends on which stage the platform blocks and whether your agent streams.
+
+A blocked request returns `HTTP 400` before your agent runs. The message ends with the request ID, which you can use when you file a support request:
+
+```json
+{
+  "error": {
+    "code": "content_filter",
+    "message": "The request was blocked due to content safety policy violation at input stage. [Request ID: <request-id>]",
+    "type": "content_safety_error"
+  }
+}
+```
+
+A blocked buffered response also returns `HTTP 400`, with a message that names the output stage.
+
+A blocked streamed response is different. The platform sends response headers before it screens the agent's output, so the status stays `HTTP 200`. The platform discards the events it was holding, sends a single error event, and ends the stream:
+
+```text
+event: error
+data: {"type":"error","code":"content_filter","message":"The response was blocked due to content safety policy violation."}
+```
+
+Handle this event in your client. Treat it as terminal. Earlier events might already have reached the client, so the user could see partial output before the block. A `200` status alone doesn't mean the response passed the policy.
+
+### Test the moderation settings
+
+To confirm your settings screen the right fields, send a request that your policy is configured to block and check that the platform blocks it.
+
+If you deployed with `azd`, put the request body in a file, such as *blocked-request.json*:
+
+```json
+{
+  "message": "<a prompt that your policy is configured to block>"
+}
+```
+
+Then invoke the agent with that file:
+
+```bash
+azd ai agent invoke -f blocked-request.json
+```
+
+`azd` reads the protocol from `azure.yaml`. Send the body as a file rather than as a message argument: `azd` sends a message argument as `text/plain`, and an `inputContentType` of `json` can't parse it, so the platform forwards the request unscreened.
+
+You can also call the endpoint directly:
+
+```bash
+curl -i -X POST "$BASE_URL/agents/my-agent/endpoint/protocols/invocations?api-version=$API_VERSION" \
+  -H "Authorization: ******" \
+  -H "Content-Type: application/json" \
+  -d '{"message":"<a prompt that your policy is configured to block>"}'
+```
+
+If the request isn't blocked, check that:
+
+- `input_paths` matches the field that holds the user text. A path that selects nothing means nothing is screened.
+- Each `text_field` is a field name, such as `content`, rather than a path such as `$.content`.
+- Each `event_type` matches the `type` value your agent sends in its streamed events.
+- Your `event_type` and `text_field` values match your agent's casing exactly, and name top-level properties rather than nested ones.
+- The policy filters the relevant content category and severity.
+
+If requests fail with `HTTP 502` instead, `response_mode` probably doesn't match what your agent returns. Set it to `both` if your agent answers both ways.
+
 ## Network egress controls (preview)
 
 > [!IMPORTANT]
@@ -334,6 +603,24 @@ Deploy in **Audit** mode first, review the egress decisions, refine your rules, 
 
 > [!NOTE]
 > Audit mode changes only how **Deny** actions behave: a request that would be denied is logged instead of blocked. **Transform** and **Rewrite** actions are applied in both Audit and Enforce modes, so header transforms and redirects still take effect while you audit.
+
+### Common egress control use cases
+
+Use egress controls to limit a hosted agent to the external services required
+for its task. The following patterns are common starting points:
+
+| Use case | Policy approach |
+| --- | --- |
+| Discover an agent's outbound dependencies | Start with **Audit** mode and a **Deny** default action. Run representative tasks, review the egress decisions, and add the required hosts before you enforce the policy. |
+| Restrict a coding agent to approved package and source repositories | Allow the package registries, download hosts, and source-control APIs that the agent needs. Use a **Deny** default action for all other destinations. |
+| Limit an integration agent to approved SaaS APIs | Allow only the API hosts for the services that the agent integrates with, such as an issue tracker or source-control provider. |
+| Add request metadata for an enterprise API | Use a **Transform** rule with a static header value to add a workload identifier or correlation tag. Don't put credentials or other secrets in a static header value. |
+| Route requests through an enterprise gateway | Use a **Rewrite** rule to redirect a matched host to an approved gateway. Test rewrites in a nonproduction environment before you use them with agent workloads. |
+
+Package managers and SDKs can follow redirects or use separate download
+hosts. Don't assume that the registry host is the only destination required.
+Use Audit mode with representative workloads to identify the complete host
+set.
 
 ### Add egress rules by using the Azure Developer CLI
 
@@ -426,6 +713,70 @@ To review the configured rules, send a GET request to the same URL and inspect `
 
 For a complete request body that combines a default action with several rule types, see the [`PutRaiPolicyWithEgress.json`](https://github.com/Azure/azure-rest-api-specs/blob/main/specification/cognitiveservices/CognitiveServices.Management/examples/2026-05-15-preview/PutRaiPolicyWithEgress.json) example in the Azure REST API specs.
 
+### Example: restrict a dependency research agent
+
+Consider a coding agent that researches Python dependencies and their source
+repositories. It needs to read package metadata from PyPI, download package
+files, and retrieve repository metadata from the GitHub API. It shouldn't
+connect to unrelated internet destinations.
+
+Start with the following egress policy in Audit mode. Replace the
+`egressPolicy` object in the REST request from the previous section with this
+object:
+
+```json
+{
+  "mode": "Audit",
+  "defaultAction": "Deny",
+  "rules": [
+    {
+      "name": "allow-pypi-metadata",
+      "ruleType": "Fqdn",
+      "match": { "host": "pypi.org" },
+      "action": { "actionType": "Allow" }
+    },
+    {
+      "name": "allow-python-package-downloads",
+      "ruleType": "Fqdn",
+      "match": { "host": "files.pythonhosted.org" },
+      "action": { "actionType": "Allow" }
+    },
+    {
+      "name": "allow-github-api",
+      "ruleType": "Fqdn",
+      "match": { "host": "api.github.com" },
+      "action": { "actionType": "Allow" }
+    }
+  ]
+}
+```
+
+Validate and enforce the policy:
+
+1. Create or update the RAI policy with `mode` set to `Audit`.
+1. Attach the policy to the hosted agent and deploy a new agent version.
+1. Run representative tasks, such as retrieving Python package metadata,
+   inspecting a package's source repository, and downloading a package.
+1. Have the agent attempt a request to an unrelated host, such as
+   `example.com`. Audit mode allows the request but records that the policy
+   would deny it.
+1. [Review the egress decisions](#view-egress-decisions). Add any legitimate
+   redirect or download hosts that appear in the agent's normal workflow.
+1. Change `mode` from `Audit` to `Enforced`, update the RAI policy, and deploy
+   a new agent version.
+1. Start a new session or resume the session, and run the same tasks again.
+   Running sandboxes don't reload policy changes. Requests to the approved
+   package and source-control hosts succeed. A request to an unapproved host
+   returns `HTTP 403`.
+
+The exact host set depends on the package manager, SDK, and services that your
+agent uses. Keep the allow list specific to the workload instead of copying the
+example unchanged.
+
+For a runnable hosted-agent sample that exercises Allow, Deny, Transform,
+Rewrite, Audit, wildcard, and rule-ordering scenarios, see the
+[egress control sample](https://github.com/microsoft-foundry/foundry-samples/tree/main/samples/python/hosted-agents/agent-framework/responses/18-egress-control).
+
 ### Transform request headers
 
 When a rule's `action.actionType` is `Transform` (or `Rewrite`), you can modify the headers of the outbound request by using an `action.headers` array. Each entry describes one header operation:
@@ -452,12 +803,19 @@ Each header object supports the following fields:
 | --- | --- | --- |
 | `operation` | Yes | The header operation: `Set`, `Insert`, or `Remove`. Operation names are case-insensitive. If you omit it, `Set` is used. |
 | `name` | Yes | The name of the header to modify. |
-| `value` | For `Set` and `Insert` | The static header value. Not used for `Remove`. |
+| `value` | For `Set` and `Insert` when `valueRef` isn't used | The static header value. Not used for `Remove`. |
+| `valueRef` | For `Set` and `Insert` when `value` isn't used | A managed identity value reference. Not used for `Remove`. |
 
 You must include `headers` when `actionType` is `Transform`. You can omit `headers` when `actionType` is `Rewrite`. Header transforms apply only to requests that match the rule.
 
 > [!NOTE]
-> During preview, header transforms support **static `value`** only. Dynamic value references (`valueRef`) that inject a **managed identity** token or a **secret** are **coming soon** and aren't enforced yet. A rule that uses `valueRef` is accepted but the header isn't injected at runtime.
+> Header transforms support static values and managed identity value references.
+> For a managed identity value reference, set
+> `valueRef.managedIdentityRef.resource` to the target resource URI, such as
+> `https://storage.azure.com/`. Set `format` to the bearer scheme with the
+> `{token}` placeholder. Grant the deployed agent's
+> `instance_identity.principal_id` the required role on the target resource.
+> Secret value references aren't supported during preview.
 
 #### Header operations
 
@@ -480,7 +838,7 @@ You can also author egress rules in the Foundry portal as a **Network** control 
    :::image type="content" source="../media/add-hosted-agent-guardrails/network-egress-control.png" alt-text="Screenshot of the Network control in a guardrail showing the Egress rules row and the Outbound requests default action." lightbox="../media/add-hosted-agent-guardrails/network-egress-control.png":::
 
 1. Select **Egress rules**, and set the **Outbound requests** default action to **Deny** or **Allow**.
-1. Select **Add rules**, choose a **Mode** (**Audit** or **Enforce**), enter a **Host match** and an **Action**, and then select **Add**. Reorder rules as needed; the first match wins. For a **Transform** action, use a **Static value** for the header. (**Managed identity** and **Secret reference** value sources appear in the dialog but aren't enforced yet - see [Preview limitations](#preview-limitations-and-whats-coming-next).)
+1. Select **Add rules**, choose a **Mode** (**Audit** or **Enforce**), enter a **Host match** and an **Action**, and then select **Add**. Reorder rules as needed; the first match wins. For a **Transform** action, use a **Static value** or **Managed identity** value source for the header. The **Secret reference** value source appears in the dialog but isn't supported during preview. Don't use this option. For more information, see [Preview limitations](#preview-limitations-and-whats-coming-next).
 
    :::image type="content" source="../media/add-hosted-agent-guardrails/egress-rule-list.png" alt-text="Screenshot of the Create egress rules dialog with Audit and Enforce modes, a host match field, and an action list." lightbox="../media/add-hosted-agent-guardrails/egress-rule-list.png":::
 
@@ -594,7 +952,7 @@ Network egress controls are an additive feature. During preview:
 
 The following capabilities aren't available yet and are planned for future updates:
 
-- **Dynamic header values** — injecting a header value from a **managed identity** or a **secret** (`valueRef`). During preview, use a static `value`.
+- **Secret header values** — Injecting a header value from a secret reference isn't supported during preview.
 - Rule types such as Azure service tags and IP address ranges.
 - MCP tool policies, PII and data-loss-prevention inspection, and custom webhook hooks.
 

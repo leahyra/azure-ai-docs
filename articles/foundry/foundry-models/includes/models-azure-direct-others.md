@@ -4,11 +4,11 @@ manager: mcleans
 ms.service: microsoft-foundry
 ms.subservice: foundry-model-inference
 ms.topic: include
-ms.date: 09/21/2026
+ms.date: 10/09/2026
 ms.author: mopeakande
 author: msakande
 ai-usage: ai-assisted
-ms.custom: pilot-ai-workflow-jan-2026, classic-and-new
+ms.custom: pilot-ai-workflow-jan-2026, classic-and-new, doc-kit-assisted
 
 ---
 
@@ -90,6 +90,7 @@ For model availability across all regions, grouped by deployment category, see [
 
 | Model  | Type | Capabilities |
 | ------ | ---- | ------------ |
+| [`Microsoft-Decision-1`](https://ai.azure.com/catalog/models/Microsoft-Decision-1) | decision, text classification, zero shot classification | - **Calibrated decision scoring:** Returns a calibrated probability score for every supplied answer option. <br /> - **Flexible question formats:** Supports yes/no, multiple-choice, rating, classification, and rubric-based questions. <br /> - **Single-pass scoring:** Produces structured decision scores in a single model invocation over inputs of up to 32K tokens. <br /> - The model is text-only and doesn't accept or produce image, audio, or video content. It doesn't generate explanations or rationales. |
 | `MAI-Thinking-1` <br> **Preview** | chat-completion <br /> (with reasoning content). See [API endpoints](../how-to/use-foundry-models-mai-thinking.md#api-endpoints) for details. | - **Input:** text. <br /> - **Output:** text (up to 64,000 tokens). <br /> - **Context length:** 256,000 tokens <br /> - **Tool calling:** Yes. <br /> - **Response formats:** Text. <br /> - **Key features:** OpenAI Chat Completions compatibility; Encrypted Chain-of-Thought |
 | `MAI-Image-2.6-Flash` <br> **Preview** | Image-to-Image and Text-to-Image. See [API endpoints](../how-to/use-foundry-models-mai-image.md) for details. | - **Input:** text and up to five images (JPEG or PNG format for image editing workflows) <br /> - **Output:** One image <br /> - **Context length**: 32,000 tokens <br /> - **Tool calling:** No <br /> - **Response formats:** Image (PNG) <br /> - **Languages:** `en` <br /> - **Key features:** High-quality text-to-image generation; Image editing that supports precise, surgical edits without disrupting the rest of the image; Capability to generate realistic imagery with consistent visual structure. Well suited for tasks such as concept visualization, creative content generation, image editing workflows, and production design. <br /> - **Parameters:** `width`, `height`, `prompt`, `auto_aspect_ratio`, `web_grounding` <br /> Minimum 768×768 pixels; maximum total pixel count 2,359,296 (equivalent to 1536×1536). Either dimension can exceed 1536 as long as the total pixel count stays within the limit. |
 | `MAI-Image-2.6` <br> **Preview** | Image-to-Image and Text-to-Image. See [API endpoints](../how-to/use-foundry-models-mai-image.md) for details. | - **Input:** text and up to five images (JPEG or PNG format for image editing workflows) <br /> - **Output:** One image <br /> - **Context length**: 32,000 tokens <br /> - **Tool calling:** No <br /> - **Response formats:** Image (PNG) <br /> - **Languages:** `en` <br /> - **Key features:** High-quality text-to-image generation; Image editing that supports precise, surgical edits without disrupting the rest of the image; Capability to generate realistic imagery with consistent visual structure. Well suited for tasks such as concept visualization, creative content generation, image editing workflows, and production design. <br /> - **Parameters:** `width`, `height`, `prompt`, `auto_aspect_ratio`, `web_grounding` <br /> Minimum 768×768 pixels; maximum total pixel count 2,359,296 (equivalent to 1536×1536). Either dimension can exceed 1536 as long as the total pixel count stays within the limit. |
@@ -137,12 +138,18 @@ SpaceXAI's Grok models in Foundry Models include a diverse set of reasoning and 
 
 To work with Grok models, see [Deploy and use Grok models in Foundry](../how-to/use-foundry-models-grok.md).
 
+> [!NOTE]
+> Generally available SpaceXAI Grok models starting with Grok 4.7 are available for a minimum of six months. Earlier Grok models retain their existing lifecycle commitments. For model-specific retirement dates, see the [Model retirement schedule](../../openai/concepts/model-retirement-schedule.md).
+
 [Registration is required for access to](https://aka.ms/xai/grok-4) `grok-code-fast-1` and `grok-4`.
+
+For current rates and billing details, see [Grok model pricing](https://azure.microsoft.com/pricing/details/ai-foundry-models/grok/).
 
 For model availability across all regions, grouped by deployment category, see [Region availability for Foundry Models sold by Azure](../../foundry-models/concepts/models-sold-directly-by-azure-region-availability.md).
 
 | Model  | Type | Capabilities |
 | ------ | ---- | ------------ |
+| `grok-4.7` | Chat Completions API <br /> Responses API | - **Input:** text, image (500,000 tokens) <br /> - **Output:** text (500,000 tokens) <br /> - **Context window:** 500,000 tokens (input and output combined)<br> - **Languages:** `en` <br />  - **Tool calling:** yes <br /> - **Response formats:** text, JSON |
 | `grok-4.6` <br> **Preview** | chat-completion | - **Input:** text, image <br /> - **Output:** text (128,000 tokens max) <br /> - **Context window:** 200,000 tokens<br> - **Languages:** `en` <br />  - **Tool calling:** yes <br /> - **Response formats:** text, JSON |
 | `grok-4.3` <br> **Preview** | chat-completion | - **Input:** text (200,000 tokens) <br /> - **Output:** text (8,192 tokens) <br /> - **Languages:** `en` <br />  - **Tool calling:** yes <br /> - **Response formats:** text |
 | `grok-4-20-reasoning` <br> **Preview** | chat-completion | - **Input:** text (262,000 tokens) <br /> - **Output:** text (8,192 tokens) <br /> - **Languages:** `en` <br />  - **Tool calling:** yes <br /> - **Response formats:** text |

@@ -9,7 +9,7 @@ reviewer: patrickfarley
 ms.reviewer: pafarley
 ms.service: azure-speech-foundry-tools
 ms.topic: how-to
-ms.date: 08/26/2026
+ms.date: 10/08/2026
 ai-usage: ai-assisted
 ms.custom: references_regions
 # Customer intent: As a developer, I want to learn how to use the Voice Live API for real-time voice agents.
@@ -26,7 +26,7 @@ Unless otherwise noted, the Voice Live API uses the [same events](/azure/ai-foun
 
 ## Supported models and regions
 
-For a table of supported models and regions, see the [Voice Live API overview](./voice-live.md#supported-models-and-regions).
+For supported models, see the [Voice Live API overview](./voice-live.md#supported-models-and-regions). For regional availability and separate processing scopes for LLMs, HD voices, and transcription models, see [Voice Live region support](./regions.md?tabs=voice-live#regions).
 
 ## Authentication
 
@@ -39,7 +39,7 @@ A [Microsoft Foundry resource](../multi-service-resource.md) or a [Azure Speech 
 ### WebSocket endpoint
 
 The WebSocket endpoint for the Voice Live API is `wss://<your-ai-foundry-resource-name>.services.ai.azure.com/voice-live/realtime?api-version=2026-04-10` or, for older resources, `wss://<your-ai-foundry-resource-name>.cognitiveservices.azure.com/voice-live/realtime?api-version=2026-04-10`.
-The endpoint is the same for all models. The only difference is the required `model` query parameter, or, when using the Agent service, the `agent_id` and `project_id` parameters.
+The endpoint path is the same for all models, but model availability depends on the resource's region. Select a model with the required `model` query parameter. When using the Agent service, use the `agent_id` and `project_id` parameters instead.
 
 For example, an endpoint for a resource with a custom domain would be `wss://<your-ai-foundry-resource-name>.services.ai.azure.com/voice-live/realtime?api-version=2026-04-10&model=gpt-realtime`
 
@@ -194,13 +194,16 @@ The Voice Live API supports multiple transcription models for input audio. Set t
 | Transcription model | Compatible chat models | Description |
 |---|---|---|
 | `azure-speech` | All non-multimodal models and agents | Azure speech to text. Automatically active with non-multimodal models. Supports [phrase list and custom speech](./voice-live-how-to-customize.md). |
-| `mai-transcribe` | All non-multimodal models and agents | MAI Transcribe speech recognition model (preview). |
+| `mai-transcribe` | `gpt-realtime`, `gpt-realtime-mini`, all non-multimodal models, and agents | Alias for the latest MAI Transcribe speech recognition model (preview), currently `mai-transcribe-2`. |
+| `mai-transcribe-2` | `gpt-realtime`, `gpt-realtime-mini`, all non-multimodal models, and agents | Explicitly selects MAI Transcribe 2 (preview). |
 | `whisper-1` | `gpt-realtime`, `gpt-realtime-mini` | OpenAI Whisper transcription model. |
 | `gpt-4o-transcribe` | `gpt-realtime`, `gpt-realtime-mini` | GPT-4o based transcription model. |
 | `gpt-4o-mini-transcribe` | `gpt-realtime`, `gpt-realtime-mini` | GPT-4o mini based transcription model. |
 | `gpt-4o-transcribe-diarize` | `gpt-realtime`, `gpt-realtime-mini` | GPT-4o transcription with diarization. |
 
-For supported languages per model, see [Voice Live API supported languages](./voice-live-language-support.md?tabs=speechinput).
+You can also select `mai-transcribe-2-streaming` (preview) by setting `input_audio_transcription.model` to `mai-transcribe-2-streaming`. Regional availability differs from `mai-transcribe-2`. Check [Speech feature availability and processing scope](./regions.md?tabs=voice-live#speech-feature-availability-and-processing-scope) before selecting a transcription model.
+
+For supported languages per model, see [Voice Live API supported languages](./voice-live-language-support.md?tabs=speechinput) and [MAI-Transcribe-2-Streaming language support](./mai-transcribe-2-streaming.md#language-support).
 
 ### Azure speech to text
 
@@ -221,7 +224,15 @@ For speech input customization options such as phrase list and custom speech, se
 
 ### MAI Transcribe (preview)
 
-MAI Transcribe is a transcription model that you can use as an alternative to `azure-speech` with any text-based chat model or agent (for example, `gpt-4.1`). Enable it by setting `input_audio_transcription.model` to `mai-transcribe` in a `session.update` message:
+MAI Transcribe is a transcription model that you can use as an alternative to `azure-speech` with any text-based chat model or agent (for example, `gpt-4.1`).
+
+The `mai-transcribe` alias points to the latest MAI Transcribe model, currently `mai-transcribe-2`. Use `mai-transcribe-2` to select that model explicitly.
+
+Both models support `input_audio_transcription.phrase_list`, an optional array of words or phrases that biases recognition toward those terms. For an example, see [MAI Transcribe configuration](./voice-live-language-support.md?tabs=speechinput#mai-transcribe-supported-languages-preview).
+
+Check the [Microsoft model retirement schedule](../../foundry/openai/concepts/model-retirement-schedule.md#microsoft) for retirement dates and replacement models.
+
+Enable MAI Transcribe by setting `input_audio_transcription.model` to `mai-transcribe` or `mai-transcribe-2` in a `session.update` message:
 
 ```json
 {
@@ -292,6 +303,8 @@ When using `gpt-realtime` or `gpt-realtime-mini`, you can use OpenAI transcripti
 ## Audio output through Azure text to speech
 
 You can use the `voice` parameter to specify a standard or custom voice. The voice is used for audio output.
+
+Voice Live provides standard HD voices in all supported resource regions, including regions without local HD voice support in standalone Azure Speech. Voice Live routes HD voice synthesis to a supported speech region. See [Speech feature availability and processing scope](./regions.md?tabs=voice-live#speech-feature-availability-and-processing-scope).
 
 The `voice` object has the following properties:
 
@@ -610,7 +623,10 @@ Refer to this sample code [use avatar in Voice live API](https://github.com/micr
 
 ### Use a photo avatar
 
-A [photo avatar](./text-to-speech-avatar/what-is-text-to-speech-avatar.md) generates a talking-head video from a single image. Voice Live supports both standard photo avatars (provided by Microsoft) and custom photo avatars (created from your own image). To use a photo avatar, set `type` to `photo-avatar` and `model` to the base model that drives it (currently `vasa-1`). For a standard photo avatar, set `character` to the photo avatar character name (for the list, see [Talking heads](./text-to-speech-avatar/standard-avatars.md#talking-heads)). For a custom photo avatar, set `character` to your custom photo avatar name and set `customized` to `true`.
+A [photo avatar](./text-to-speech-avatar/what-is-text-to-speech-avatar.md) generates a talking-head video from a single image. Voice Live supports both standard photo avatars (provided by Microsoft) and custom photo avatars (created from your own image). To use a photo avatar, set `type` to `photo-avatar` and `model` to the base model that drives it (`vasa-1` or `vasa-2`). For a standard photo avatar, set `character` to the photo avatar character name (for the list, see [Photo avatars](./text-to-speech-avatar/standard-avatars.md#photo-avatars)). For a custom photo avatar, set `character` to your custom photo avatar name and set `customized` to `true`.
+
+> [!NOTE]
+> `vasa-2` is in preview and supports only the characters listed for it in [Supported standard avatars](./text-to-speech-avatar/standard-avatars.md).
 
 A standard photo avatar generates a talking-head video from a single photo, and the expected source photo resolution is 512x512.
 

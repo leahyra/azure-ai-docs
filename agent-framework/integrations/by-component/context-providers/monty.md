@@ -4,7 +4,7 @@ description: Add cross-platform CodeAct execution to Agent Framework Python agen
 author: eavanvalkenburg
 ms.topic: article
 ms.author: edvan
-ms.date: 09/19/2026
+ms.date: 10/07/2026
 ms.service: agent-framework
 ai-usage: ai-assisted
 ---
@@ -19,6 +19,13 @@ Use Monty when you need a cross-platform CodeAct runtime without Hyperlight's hy
 
 > [!NOTE]
 > `agent-framework-monty` is a beta package. Monty restricts operating-system, subprocess, and direct network access, but it isn't a hardware-isolated virtual machine.
+
+> [!WARNING]
+> `MontyCodeActProvider` and `MontyExecuteCodeTool` don't currently support [FIDES](../../../agents/security.md). Provider-managed host-tool calls don't pass through the agent's per-function middleware pipeline.
+>
+> Checks on direct agent tools or the outer `execute_code` call don't cover nested calls, code-internal intermediate values, or file and network capabilities. Host tools must enforce their own authorization and destination controls.
+>
+> Keep FIDES-dependent tools as direct agent tools, not Monty-managed tools, or leave CodeAct disabled for workflows requiring those guarantees. See [CodeAct's current limitations](../../../agents/code-act.md#current-limitations).
 
 ## Install the packages
 
@@ -58,7 +65,18 @@ Tools omitted from a mapping use compact format. Compact rendering automatically
 - Monty resource limits
 - files returned from read-write mounts as Agent Framework content
 
-Monty doesn't provide an outbound URL allow list. Provide network access through a narrow host tool that validates destinations and inputs.
+## Network access and Python packages
+
+Monty runs its own Python interpreter, not the host's Python environment. This
+integration doesn't provide `pip` or another package-installation option.
+Installing a dependency on the host doesn't make it importable in Monty code.
+Use the interpreter's supported modules for code that runs inside Monty.
+
+Monty doesn't provide an `allowed_domains` option. For external API calls or
+operations that require host-installed packages, register a narrow host tool
+and invoke it from Monty code. Keep credentials, authorization, and
+destination allow-list checks in that function because it executes on the
+host, outside the Monty interpreter.
 
 ## Choose Monty or Hyperlight
 

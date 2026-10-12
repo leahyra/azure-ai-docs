@@ -9,13 +9,13 @@ ms.topic: concept-article
 ms.date: 06/01/2026
 ms.author: mabables
 author: ManojBableshwar
-ms.reviewer: mopeakande
-reviewer: msakande
+ms.reviewer: osiotugo
+reviewer: ositanachi
 ai-usage: ai-assisted
 #CustomerIntent: As a Microsoft Foundry developer or platform owner, I want to understand what managed compute is, how it fits alongside pay-per-token and provisioned throughput, and what models, runtimes, accelerators, billing, and access control it provides, so that I can decide when to use it and plan a deployment.
 ---
 
-# Managed compute in Microsoft Foundry (Preview)
+# Managed compute in Microsoft Foundry (preview)
 
 > [!NOTE]
 > Managed compute in Foundry is currently in preview.
@@ -73,7 +73,7 @@ Managed compute deployments target an **accelerator family**, not a specific vir
 
 - NVIDIA A100 80 GB (`A100_80GB`)
 - NVIDIA H100 80 GB (`H100_80GB`)
-- AMD MI300X 192 GB (`MI_300_192GB`)
+- AMD MI300X 192 GB (`MI300_192GB`)
 
 Quota is granted per accelerator family per region.
 
@@ -195,8 +195,16 @@ Managed compute is in **public preview**. Note the following before deploying pr
 - **Region availability**: Managed compute launches with Global scope. Data Zone deployments and additional regions are rolling out — see the [general availability matrix](general-availability.md) for current coverage.
 - **Pricing**: Hourly rates by accelerator family and region, reserved capacity, and commitment discounts are evolving for managed compute deployment in preview. For current rates, see the [Azure pricing calculator](https://azure.microsoft.com/pricing/calculator/).
 
+## Serve fine-tuned LoRA adapters (preview)
+
+[!INCLUDE [Feature preview](../includes/feature-preview.md)]
+
+In the current Foundry experience, a base deployment with a compatible LoRA-enabled template can host one or more adapters. The adapter must match the base model and version; base-model deployment support alone doesn't establish adapter support. See [Deploy fine-tuned models with managed compute (preview)](../fine-tuning/deploy-fine-tuned-models.md#deploy-with-managed-compute-preview).
+
 ## Related content
 
+- [Fine-tuning overview](../fine-tuning/overview.md)
+- [Deploy fine-tuned models with managed compute (preview)](../fine-tuning/deploy-fine-tuned-models.md#deploy-with-managed-compute-preview)
 - [Deploy open-source models with managed compute](../how-to/deploy-models-managed.md)
 - [Deployment overview for Microsoft Foundry Models](deployments-overview.md)
 - [Role-based access control for Microsoft Foundry](rbac-foundry.md)

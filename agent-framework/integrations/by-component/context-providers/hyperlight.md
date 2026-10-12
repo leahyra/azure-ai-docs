@@ -5,7 +5,7 @@ zone_pivot_groups: programming-languages
 author: eavanvalkenburg
 ms.topic: article
 ms.author: edvan
-ms.date: 09/19/2026
+ms.date: 10/07/2026
 ms.service: agent-framework
 ai-usage: ai-assisted
 ---
@@ -34,6 +34,13 @@ Hyperlight is the currently documented backend for CodeAct in Agent Framework. I
 This integration uses the CodeAct pattern: the provider contributes a code-execution tool and manages the execution environment around each run.
 
 For the pattern-level overview, see [CodeAct](../../../agents/code-act.md).
+
+> [!WARNING]
+> Hyperlight CodeAct providers and standalone execution tools don't currently support [FIDES](../../../agents/security.md). FIDES is Python-only and isn't available in the .NET integration.
+>
+> Provider-managed host-tool calls don't pass through the agent's per-function middleware pipeline. Checks on direct agent tools or the outer `execute_code` call don't cover nested calls, code-internal intermediate values, or file and network capabilities.
+>
+> Host tools must enforce their own authorization and destination controls. Keep FIDES-dependent tools as direct agent tools, not provider-managed tools, or leave CodeAct disabled for workflows requiring those guarantees. See [CodeAct's current limitations](../../../agents/code-act.md#current-limitations).
 
 ## Why Hyperlight CodeAct
 
@@ -215,6 +222,17 @@ using var codeAct = new HyperlightCodeActProvider(options);
 
 The same `FileMounts` and `AllowedDomains` collections, plus tools, can also be modified at runtime through `AddFileMounts(...)`, `RemoveFileMounts(...)`, `AddAllowedDomains(...)`, and `RemoveAllowedDomains(...)` on `HyperlightCodeActProvider`.
 
+`AllowedDomains` controls outbound requests from the guest. It doesn't install
+packages or make dependencies from the host process available inside the
+guest. `CreateForWasm(modulePath)` selects an existing guest module. The Agent
+Framework integration doesn't provide a custom guest build or package
+installation workflow.
+
+For operations that require host-installed libraries or external APIs,
+register a narrow host tool. Keep credentials, authorization, and destination
+policy in that tool because host callbacks run outside the guest and aren't
+restricted by the sandbox's `AllowedDomains` configuration.
+
 ## Output guidance
 
 To surface text from `execute_code`, end the guest code with `print(...)`; Hyperlight does not return the value of the last expression automatically.
@@ -373,6 +391,17 @@ codeact = HyperlightCodeActProvider(
     ],
 )
 ```
+
+`allowed_domains` controls outbound requests from the guest. It doesn't install
+Python packages or make packages from the host environment importable in
+sandboxed code. `module_path` selects an existing guest module. The Agent
+Framework integration doesn't provide a custom guest build or package
+installation workflow.
+
+For operations that require host-installed libraries or external APIs,
+register a narrow host tool. Keep credentials, authorization, and destination
+allow list checks in that function because host callbacks run outside the
+guest and aren't restricted by `allowed_domains`.
 
 ## Output guidance
 

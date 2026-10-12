@@ -6,7 +6,7 @@ ms.subservice: foundry-observability
 ms.custom:
   - references_regions
 ms.topic: how-to
-ms.date: 08/31/2026
+ms.date: 10/07/2026
 ms.reviewer: dlozier
 ms.author: lagayhar
 author: lgayhardt
@@ -14,9 +14,7 @@ ai-usage: ai-assisted
 # customer intent: As a developer, I want to simulate and evaluate conversations so that I can test agent behavior before deployment.
 ---
 
-# Simulate conversations with the Microsoft Foundry SDK (preview)
-
-[!INCLUDE [feature-preview](../../includes/feature-preview.md)]
+# Simulate conversations with the Microsoft Foundry SDK
 
 Generate simulated conversations from scenario descriptions and evaluate them at the conversation level. Use this scenario to test your agent's behavior in controlled situations before deployment. The service generates realistic conversations based on your scenario descriptions and then evaluates them.
 
@@ -40,33 +38,90 @@ This approach is useful for:
 
 Conversation simulation follows these steps:
 
-1. You provide a dataset of scenario descriptions—each row describes a situation the simulated user tries to accomplish.
+1. You provide scenario descriptions as JSONL data or strongly typed inline test cases. Each test case describes a situation the simulated user tries to accomplish.
 1. The service uses a simulator model to play the role of the user, interacting with your agent based on the scenario.
 1. Each scenario generates one or more complete conversations.
 1. Conversation-level evaluators assess the generated conversations.
-1. Your project stores both the conversations and evaluation results.
+1. Your project stores the evaluation results. You can optionally persist all generated conversations as a versioned Foundry dataset.
+
+The run uses the `azure_ai_user_conversation_simulation` data source. Put settings that apply to every test case in `default_simulation_configuration`. A test case can override individual conversation settings in its `simulation_configuration`; settings that it doesn't override continue to use the run defaults.
 
 ## Prepare scenario data
 
 > [!TIP]
-> Instead of authoring scenarios by hand, generate them by using the **Simulation seed (multi-turn)** task type. The generated dataset contains the required `test_case_description` field and can also contain `id`, `category`, and `desired_num_turns`. Use the generated dataset's ID as `scenarios_id` in the simulation run and skip the upload step. See [Generate a simulation seed dataset](evaluation-dataset-synthetic.md#generate-a-simulation-seed-dataset-sdk).
+> Instead of authoring scenarios by hand, generate them by using the **Simulation seed (multi-turn)** task type. Before using an existing generated dataset with this API, normalize `id` to `test_case_id` and move `desired_num_turns` into `simulation_configuration`. See [Generate a simulation seed dataset](evaluation-dataset-synthetic.md#generate-a-simulation-seed-dataset).
 
-Create a JSONL file where each line describes a scenario for the simulated user. Each row must contain `test_case_description`. The `id`, `category`, and `desired_num_turns` fields are optional. Include details about the user's goal, context, and constraints. For a complete example, see the [conversation evaluation samples](https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/ai/azure-ai-projects/samples/evaluations) in the SDK.
+Supply test cases by using one of these source types:
 
-```json
-{"id": "contoso_refund_timeline", "test_case_description": "Customer returned an item to Contoso Electronics 5 days ago and hasn't received their refund yet. They want to know how long Contoso refunds take.", "desired_num_turns": 10}
-{"id": "contoso_store_hours_lookup", "test_case_description": "Customer wants to know what time the Contoso Electronics store closes today. Simple single-fact question with possibly one clarifying turn about which location.", "desired_num_turns": 3}
+- `file_id` or `file_content` for JSONL scenarios.
+- `inline_user_conversation_simulation` for strongly typed test cases in the run request. Include at least one test case.
+
+For JSONL, use the canonical property names shown in the following example. Include the user's goal, context, and behavioral constraints in `test_case_description`. The description can contain 1 through 2,500 characters.
+
+```jsonl
+{"test_case_id":"contoso_refund_timeline","test_case_description":"Customer returned an item five days ago and wants to know when the refund will arrive.","simulation_configuration":{"desired_num_turns":10}}
+{"test_case_id":"contoso_store_hours_lookup","test_case_description":"Customer wants today's closing time and might need to clarify the store location.","simulation_configuration":{"desired_num_turns":3,"conversation_repetitions":2}}
 ```
 
-Use these parameters to configure the simulation:
+When the JSONL data uses these canonical names, omit `data_mapping`. If it uses different names, map those attributes to `test_case_id`, `test_case_description`, and `simulation_configuration`. Don't use `data_mapping` with an `inline_user_conversation_simulation` source.
 
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `num_conversations` | No | Number of conversations to generate per scenario. Defaults to 5, server-side cap of 5. |
-| `max_turns` | No | Maximum number of turns (exchanges) per conversation. Defaults to 10, server-side cap of 50. |
-| `model` | Yes | Model deployment to use for simulating the user. For example, `gpt-4.1`. The [model router](../../openai/concepts/model-router.md) isn't supported as the simulator model; it can only be used as the evaluation target. |
-| `sampling_params` | No | Sampling parameters for the simulator model, including `temperature`, `top_p`, and `max_completion_tokens`. |
-| `data_mapping` | No | Maps fields from your scenario JSONL to simulation parameters. Common mappings: `test_case_description`, `id`, `desired_num_turns`. |
+Each inline or JSONL test case supports these properties:
+
+| Property | Description |
+|---|---|
+| `test_case_id` | Optional identifier. The service generates an identifier when you omit it. |
+| `test_case_description` | Scenario, user goal, and behavioral constraints that guide the simulated conversation. |
+| `simulation_configuration` | Optional settings that override the corresponding run defaults for this test case. |
+
+## Configure the simulated user
+
+Use the `model_configuration` object to configure the model that plays the simulated user. This model is separate from the `target` model or agent being evaluated.
+
+| Property | Required | Description |
+|---|---|---|
+| `model` | Yes | Simulator deployment in `{connectionName}/{modelDeploymentName}` format. The [model router](../../openai/concepts/model-router.md) isn't supported as the simulator model; it can only be an evaluation target. |
+| `sampling_params` | No | Sampling parameters applied when the simulator generates user turns. |
+| `voice_model` | No | Converts simulated user text to speech through the Voice Live endpoint. Omit this property for text-only simulation. |
+
+For voice simulation, `voice_model.type` must be `azure-standard`. Set `name` to an Azure standard neural voice name. You can also set `temperature` from 0 through 1; when omitted, the underlying voice model's default applies.
+
+## Configure conversations
+
+Set run-wide values in `default_simulation_configuration`. The conversation controls `max_num_turns`, `conversation_repetitions`, `desired_num_turns`, `audio_effects`, and `user_behavior` can also appear in a test case's `simulation_configuration` to override the corresponding run defaults. The dataset-generation properties `enable_conversation_dataset_generation` and `output_conversation_dataset_name` are valid only in `default_simulation_configuration` and can't be overridden per test case.
+
+| Property | Scope | Default | Description |
+|---|---|---|---|
+| `max_num_turns` | Run or test case | `20` | Hard limit on turns in each conversation. Must be at least 1. |
+| `conversation_repetitions` | Run or test case | `1` | Number of independent conversations generated for each test case. Must be at least 1. |
+| `desired_num_turns` | Run or test case | None | Target conversation length. It can't exceed the effective `max_num_turns`. When omitted, the simulator determines the length from the scenario. |
+| `audio_effects` | Run or test case | None | Effects applied to voice simulation. Ignored for text-only simulation. |
+| `user_behavior` | Run or test case | None | Simulated user behavior, such as interruption. |
+| `enable_conversation_dataset_generation` | Run only | `false` | Persists all generated conversations to a versioned Foundry dataset. |
+| `output_conversation_dataset_name` | Run only | Service-generated | Dataset name used when conversation dataset generation is enabled. |
+
+### Configure voice conditions and interruptions
+
+Place `audio_effects` and `user_behavior` inside `default_simulation_configuration` to apply them to every test case. To override either setting for one test case, place it inside that test case's `simulation_configuration` instead.
+
+Use `audio_effects` to test how the target performs under realistic listening conditions. Add one or more effects: `street_traffic`, `crowd_chatter`, `background_tv`, `metro_station`, or `telephonic_voice`. Set `volume_percentage` from 1 through 100 to control their combined volume. The default is `15`. Audio effects are ignored in text-only simulations.
+
+Use `user_behavior.interruption` to test how the target handles a user speaking while the target is responding. Set its `type` to `default` to enable simulated interruptions. Omit `interruption` when interruptions aren't part of the test.
+
+```json
+{
+  "default_simulation_configuration": {
+    "audio_effects": {
+      "effects": ["street_traffic", "telephonic_voice"],
+      "volume_percentage": 20
+    },
+    "user_behavior": {
+      "interruption": {
+        "type": "default"
+      }
+    }
+  }
+}
+```
 
 ## Define evaluators
 
@@ -83,6 +138,7 @@ from azure.ai.projects.models import TestingCriterionAzureAIEvaluator, PromptAge
 
 endpoint = os.environ["AZURE_AI_PROJECT_ENDPOINT"]
 model_deployment_name = os.environ["AZURE_AI_MODEL_DEPLOYMENT_NAME"]
+simulator_model = os.environ["AZURE_AI_SIMULATOR_MODEL"]
 agent_name = os.environ.get("FOUNDRY_AGENT_NAME", "")
 
 with (
@@ -98,6 +154,7 @@ with (
             "type": "object",
             "properties": {
                 "messages": {"type": "array"},
+                "tool_definitions": {"type": "array"},
             },
             "required": ["messages"],
         },
@@ -105,6 +162,36 @@ with (
     )
 
     testing_criteria = [
+        TestingCriterionAzureAIEvaluator(
+            type="azure_ai_evaluator",
+            name="output_quality",
+            evaluator_name="builtin.output_quality",
+            initialization_parameters={"model": model_deployment_name},
+            data_mapping={
+                "messages": "{{item.messages}}",
+                "tool_definitions": "{{item.tool_definitions}}",
+            },
+        ),
+        TestingCriterionAzureAIEvaluator(
+            type="azure_ai_evaluator",
+            name="tool_use_quality",
+            evaluator_name="builtin.tool_use_quality",
+            initialization_parameters={"model": model_deployment_name},
+            data_mapping={
+                "messages": "{{item.messages}}",
+                "tool_definitions": "{{item.tool_definitions}}",
+            },
+        ),
+        TestingCriterionAzureAIEvaluator(
+            type="azure_ai_evaluator",
+            name="deflection_rate",
+            evaluator_name="builtin.deflection_rate",
+            initialization_parameters={"model": model_deployment_name},
+            data_mapping={
+                "messages": "{{item.messages}}",
+                "tool_definitions": "{{item.tool_definitions}}",
+            },
+        ),
         TestingCriterionAzureAIEvaluator(
             type="azure_ai_evaluator",
             name="customer_satisfaction",
@@ -119,6 +206,20 @@ with (
             initialization_parameters={"model": model_deployment_name},
             data_mapping={"messages": "{{item.messages}}"},
         ),
+        TestingCriterionAzureAIEvaluator(
+            type="azure_ai_evaluator",
+            name="coherence",
+            evaluator_name="builtin.coherence",
+            initialization_parameters={"model": model_deployment_name},
+            data_mapping={"messages": "{{item.messages}}"},
+        ),
+        TestingCriterionAzureAIEvaluator(
+            type="azure_ai_evaluator",
+            name="groundedness",
+            evaluator_name="builtin.groundedness",
+            initialization_parameters={"model": model_deployment_name},
+            data_mapping={"messages": "{{item.messages}}"},
+        ),
     ]
 ```
 # [C#](#tab/csharp)
@@ -130,13 +231,53 @@ with (
     item_schema = new
     {
       type = "object",
-      properties = new { messages = new { type = "array" } },
+      properties = new
+      {
+        messages = new { type = "array" },
+        tool_definitions = new { type = "array" }
+      },
       required = new[] { "messages" }
     },
     include_sample_schema = false
   };
   object[] testingCriteria =
   [
+    new
+    {
+      type = "azure_ai_evaluator",
+      name = "output_quality",
+      evaluator_name = "builtin.output_quality",
+      initialization_parameters = new { model = modelDeploymentName },
+      data_mapping = new
+      {
+        messages = "{{item.messages}}",
+        tool_definitions = "{{item.tool_definitions}}"
+      }
+    },
+    new
+    {
+      type = "azure_ai_evaluator",
+      name = "tool_use_quality",
+      evaluator_name = "builtin.tool_use_quality",
+      initialization_parameters = new { model = modelDeploymentName },
+      data_mapping = new
+      {
+        messages = "{{item.messages}}",
+        tool_definitions = "{{item.tool_definitions}}"
+      }
+    },
+    new
+    {
+      type = "azure_ai_evaluator",
+      name = "deflection_rate",
+      evaluator_name = "builtin.deflection_rate",
+      initialization_parameters = new { model = modelDeploymentName },
+      data_mapping = new
+      {
+        messages = "{{item.messages}}",
+        tool_definitions = "{{item.tool_definitions}}"
+      }
+    },
     new
     {
       type = "azure_ai_evaluator",
@@ -156,8 +297,16 @@ with (
     new
     {
       type = "azure_ai_evaluator",
-      name = "conversation_coherence",
+      name = "coherence",
       evaluator_name = "builtin.coherence",
+      initialization_parameters = new { model = modelDeploymentName },
+      data_mapping = new { messages = "{{item.messages}}" }
+    },
+    new
+    {
+      type = "azure_ai_evaluator",
+      name = "groundedness",
+      evaluator_name = "builtin.groundedness",
       initialization_parameters = new { model = modelDeploymentName },
       data_mapping = new { messages = "{{item.messages}}" }
     }
@@ -165,7 +314,61 @@ with (
 ```
 # [JavaScript/TypeScript](#tab/javascript)
 
-The current JavaScript/TypeScript SDK samples don't demonstrate conversation simulation. Use the Python or cURL tab for this flow.
+```typescript
+import { AIProjectClient } from "@azure/ai-projects";
+import { DefaultAzureCredential } from "@azure/identity";
+
+const projectEndpoint =
+  process.env.AZURE_AI_PROJECT_ENDPOINT ?? "<project endpoint>";
+const modelDeploymentName =
+  process.env.AZURE_AI_MODEL_DEPLOYMENT_NAME ?? "<model deployment name>";
+const simulatorModel =
+  process.env.AZURE_AI_SIMULATOR_MODEL ?? "<connection>/<model deployment>";
+const agentName = process.env.FOUNDRY_AGENT_NAME ?? "my-agent-simulation";
+const agentVersion = process.env.FOUNDRY_AGENT_VERSION ?? "";
+
+const projectClient = new AIProjectClient(
+  projectEndpoint,
+  new DefaultAzureCredential(),
+);
+const openAIClient = projectClient.getOpenAIClient();
+
+const dataSourceConfig = {
+  type: "custom" as const,
+  item_schema: {
+    type: "object",
+    properties: {
+      messages: { type: "array" },
+      tool_definitions: { type: "array" },
+    },
+    required: ["messages"],
+  },
+  include_sample_schema: false,
+};
+
+const evaluator = (name: string, includeToolDefinitions = false) => ({
+  type: "azure_ai_evaluator",
+  name,
+  evaluator_name: `builtin.${name}`,
+  initialization_parameters: { model: modelDeploymentName },
+  data_mapping: includeToolDefinitions
+    ? {
+        messages: "{{item.messages}}",
+        tool_definitions: "{{item.tool_definitions}}",
+      }
+    : { messages: "{{item.messages}}" },
+});
+
+const testingCriteria = [
+  evaluator("output_quality", true),
+  evaluator("tool_use_quality", true),
+  evaluator("deflection_rate", true),
+  evaluator("customer_satisfaction"),
+  evaluator("task_completion"),
+  evaluator("coherence"),
+  evaluator("groundedness"),
+];
+```
 
 # [cURL](#tab/curl)
 
@@ -181,13 +384,44 @@ curl --request POST \
       "item_schema": {
         "type": "object",
         "properties": {
-          "messages": {"type": "array"}
+          "messages": {"type": "array"},
+          "tool_definitions": {"type": "array"}
         },
         "required": ["messages"]
       },
       "include_sample_schema": false
     },
     "testing_criteria": [
+      {
+        "type": "azure_ai_evaluator",
+        "name": "output_quality",
+        "evaluator_name": "builtin.output_quality",
+        "initialization_parameters": {"model": "gpt-5-mini"},
+        "data_mapping": {
+          "messages": "{{item.messages}}",
+          "tool_definitions": "{{item.tool_definitions}}"
+        }
+      },
+      {
+        "type": "azure_ai_evaluator",
+        "name": "tool_use_quality",
+        "evaluator_name": "builtin.tool_use_quality",
+        "initialization_parameters": {"model": "gpt-5-mini"},
+        "data_mapping": {
+          "messages": "{{item.messages}}",
+          "tool_definitions": "{{item.tool_definitions}}"
+        }
+      },
+      {
+        "type": "azure_ai_evaluator",
+        "name": "deflection_rate",
+        "evaluator_name": "builtin.deflection_rate",
+        "initialization_parameters": {"model": "gpt-5-mini"},
+        "data_mapping": {
+          "messages": "{{item.messages}}",
+          "tool_definitions": "{{item.tool_definitions}}"
+        }
+      },
       {
         "type": "azure_ai_evaluator",
         "name": "customer_satisfaction",
@@ -204,7 +438,7 @@ curl --request POST \
       },
       {
         "type": "azure_ai_evaluator",
-        "name": "conversation_coherence",
+        "name": "coherence",
         "evaluator_name": "builtin.coherence",
         "initialization_parameters": {"model": "gpt-5-mini"},
         "data_mapping": {"messages": "{{item.messages}}"}
@@ -226,7 +460,7 @@ curl --request POST \
 
 # [Python](#tab/python)
 
-Download [sample_data_simulation_scenarios.jsonl](https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/ai/azure-ai-projects/samples/evaluations/data_folder/sample_data_simulation_scenarios.jsonl).
+Save the canonical JSONL rows from [Prepare scenario data](#prepare-scenario-data) as `simulation_scenarios.jsonl`.
 
 ```python
 # Create (or update) an agent to simulate against
@@ -242,7 +476,7 @@ agent = project_client.agents.create_version(
 scenarios_id = project_client.datasets.upload_file(
     name="simulation-scenarios",
     version="1",
-    file_path="./sample_data_simulation_scenarios.jsonl",
+    file_path="./simulation_scenarios.jsonl",
 ).id
 
 # Create the evaluation
@@ -252,12 +486,13 @@ eval_object = openai_client.evals.create(
     testing_criteria=testing_criteria,
 )
 
-# Create a simulation run
+# Create a simulation run. AZURE_AI_SIMULATOR_MODEL uses the format
+# {connectionName}/{modelDeploymentName}.
 eval_run = openai_client.evals.runs.create(
     eval_id=eval_object.id,
     name="conversation-simulation-run",
     data_source={
-        "type": "azure_ai_target_completions",
+        "type": "azure_ai_user_conversation_simulation",
         "source": {
             "type": "file_id",
             "id": scenarios_id,
@@ -267,21 +502,20 @@ eval_run = openai_client.evals.runs.create(
             "name": agent.name,
             "version": agent.version,
         },
-        "item_generation_params": {
-            "type": "conversation_gen_preview",
-            "model": model_deployment_name,
-            "num_conversations": 2,
-            "max_turns": 5,
+        "model_configuration": {
+            "model": simulator_model,
             "sampling_params": {
                 "temperature": 0.7,
                 "top_p": 1.0,
                 "max_completion_tokens": 800,
             },
-            "data_mapping": {
-                "test_case_description": "test_case_description",
-                "id": "id",
-                "desired_num_turns": "desired_num_turns",
-            },
+        },
+        "default_simulation_configuration": {
+            "max_num_turns": 8,
+            "conversation_repetitions": 2,
+            "desired_num_turns": 5,
+            "enable_conversation_dataset_generation": True,
+            "output_conversation_dataset_name": "support-simulations",
         },
     },
     extra_body={"evaluation_level": "conversation"},
@@ -289,8 +523,7 @@ eval_run = openai_client.evals.runs.create(
 ```
 # [C#](#tab/csharp)
 
-Set `FOUNDRY_AGENT_NAME` and `FOUNDRY_AGENT_VERSION`, and download
-[sample_data_simulation_scenarios.jsonl](https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/ai/azure-ai-projects/samples/evaluations/data_folder/sample_data_simulation_scenarios.jsonl?raw=1).
+Set `FOUNDRY_AGENT_NAME`, `FOUNDRY_AGENT_VERSION`, and `AZURE_AI_SIMULATOR_MODEL`. Save the canonical JSONL rows from [Prepare scenario data](#prepare-scenario-data) as `simulation_scenarios.jsonl`.
 
 ```csharp
   var agentName = Environment.GetEnvironmentVariable("FOUNDRY_AGENT_NAME")
@@ -298,10 +531,13 @@ Set `FOUNDRY_AGENT_NAME` and `FOUNDRY_AGENT_VERSION`, and download
   var agentVersion = Environment.GetEnvironmentVariable(
     "FOUNDRY_AGENT_VERSION")
     ?? throw new InvalidOperationException("FOUNDRY_AGENT_VERSION isn't set.");
+  var simulatorModel = Environment.GetEnvironmentVariable(
+    "AZURE_AI_SIMULATOR_MODEL")
+    ?? throw new InvalidOperationException("AZURE_AI_SIMULATOR_MODEL isn't set.");
   FileDataset scenarios = await projectClient.Datasets.UploadFileAsync(
     name: "simulation-scenarios",
     version: "1",
-    filePath: "./sample_data_simulation_scenarios.jsonl");
+    filePath: "./simulation_scenarios.jsonl");
 
   BinaryData evaluationData = BinaryData.FromObjectAsJson(new
   {
@@ -320,7 +556,7 @@ Set `FOUNDRY_AGENT_NAME` and `FOUNDRY_AGENT_VERSION`, and download
     evaluation_level = "conversation",
     data_source = new
     {
-      type = "azure_ai_target_completions",
+      type = "azure_ai_user_conversation_simulation",
       source = new { type = "file_id", id = scenarios.Id },
       target = new
       {
@@ -328,18 +564,23 @@ Set `FOUNDRY_AGENT_NAME` and `FOUNDRY_AGENT_VERSION`, and download
         name = agentName,
         version = agentVersion
       },
-      item_generation_params = new
+      model_configuration = new
       {
-        type = "conversation_gen_preview",
-        model = modelDeploymentName,
-        num_conversations = 2,
-        max_turns = 5,
+        model = simulatorModel,
         sampling_params = new
         {
           temperature = 0.7f,
           top_p = 1.0f,
           max_completion_tokens = 800
         }
+      },
+      default_simulation_configuration = new
+      {
+        max_num_turns = 8,
+        conversation_repetitions = 2,
+        desired_num_turns = 5,
+        enable_conversation_dataset_generation = true,
+        output_conversation_dataset_name = "support-simulations"
       }
     }
   });
@@ -354,7 +595,66 @@ Reference: [`AIProjectDatasetsOperations.UploadFileAsync`](/dotnet/api/azure.ai.
 and [`EvaluationClient` protocol methods](https://github.com/openai/openai-dotnet/blob/main/OpenAI/src/Custom/Evals/EvaluationClient.Protocol.cs).
 # [JavaScript/TypeScript](#tab/javascript)
 
-The current JavaScript/TypeScript SDK samples don't demonstrate conversation simulation. Use the Python or cURL tab for this flow.
+Save the canonical JSONL rows from [Prepare scenario data](#prepare-scenario-data) as `simulation_scenarios.jsonl`, and then run this code:
+
+```typescript
+const agent = agentVersion
+  ? { name: agentName, version: agentVersion }
+  : await projectClient.agents.createVersion(agentName, {
+      kind: "prompt",
+      model: modelDeploymentName,
+      instructions:
+        "You are a helpful customer service agent. Be empathetic and solution-oriented.",
+    });
+
+const scenarios = await projectClient.datasets.uploadFile(
+  "simulation-scenarios",
+  "1",
+  "./simulation_scenarios.jsonl",
+);
+
+const evaluation = await openAIClient.evals.create({
+  name: "Multi-turn Conversation Simulation",
+  data_source_config: dataSourceConfig,
+  testing_criteria: testingCriteria as any,
+});
+
+const evaluationRun = await openAIClient.evals.runs.create(evaluation.id, {
+  name: "conversation-simulation-run",
+  data_source: {
+    type: "azure_ai_user_conversation_simulation",
+    source: {
+      type: "file_id",
+      id: scenarios.id ?? "",
+    },
+    target: {
+      type: "azure_ai_agent",
+      name: agent.name,
+      version: agent.version,
+    },
+    model_configuration: {
+      model: simulatorModel,
+      sampling_params: {
+        temperature: 0.7,
+        top_p: 1.0,
+        max_completion_tokens: 800,
+      },
+    },
+    default_simulation_configuration: {
+      max_num_turns: 8,
+      conversation_repetitions: 2,
+      desired_num_turns: 5,
+      enable_conversation_dataset_generation: true,
+      output_conversation_dataset_name: "support-simulations",
+    },
+  },
+  evaluation_level: "conversation",
+} as any);
+
+console.log(`Evaluation run created: ${evaluationRun.id}`);
+```
+
+Reference: [Azure SDK for JavaScript evaluation samples](https://github.com/Azure/azure-sdk-for-js/tree/main/sdk/ai/ai-projects/samples-dev/evaluations), including `multiturnConversationSimulation.ts`.
 
 # [cURL](#tab/curl)
 
@@ -367,7 +667,7 @@ curl --request POST \
     "name": "conversation-simulation-run",
     "evaluation_level": "conversation",
     "data_source": {
-      "type": "azure_ai_target_completions",
+      "type": "azure_ai_user_conversation_simulation",
       "source": {
         "type": "file_id",
         "id": "YOUR_SCENARIOS_DATASET_ID"
@@ -377,22 +677,142 @@ curl --request POST \
         "name": "my-agent",
         "version": "1"
       },
-      "item_generation_params": {
-        "type": "conversation_gen_preview",
-        "model": "gpt-4.1",
-        "num_conversations": 2,
-        "max_turns": 5,
+      "model_configuration": {
+        "model": "my-connection/gpt-4.1",
         "sampling_params": {
           "temperature": 0.7,
           "top_p": 1.0,
           "max_completion_tokens": 800
         },
-        "data_mapping": {
+        "voice_model": {
+          "type": "azure-standard",
+          "name": "en-US-AvaMultilingualNeural",
+          "temperature": 0.7
         }
+      },
+      "default_simulation_configuration": {
+        "max_num_turns": 10,
+        "conversation_repetitions": 2,
+        "audio_effects": {
+          "effects": ["street_traffic", "telephonic_voice"],
+          "volume_percentage": 20
+        },
+        "user_behavior": {
+          "interruption": {"type": "default"}
+        },
+        "enable_conversation_dataset_generation": true,
+        "output_conversation_dataset_name": "voice-support-simulations"
       }
     }
   }'
 ```
+
+---
+
+## Use inline test cases
+
+To define scenarios directly in the run request, set `data_source.source` to an `inline_user_conversation_simulation` source. Inline sources require at least one test case and don't use `data_mapping`.
+
+# [Python](#tab/python)
+
+```python
+inline_source = {
+    "type": "inline_user_conversation_simulation",
+    "test_cases": [
+        {
+            "test_case_id": "refund-delay",
+            "test_case_description": "A frustrated customer wants an update on a delayed refund.",
+            "simulation_configuration": {
+                "desired_num_turns": 6,
+            },
+        }
+    ],
+}
+
+# In the run request:
+# data_source={..., "source": inline_source}
+```
+
+# [C#](#tab/csharp)
+
+```csharp
+object inlineSource = new
+{
+  type = "inline_user_conversation_simulation",
+  test_cases = new[]
+  {
+    new
+    {
+      test_case_id = "refund-delay",
+      test_case_description =
+        "A frustrated customer wants an update on a delayed refund.",
+      simulation_configuration = new { desired_num_turns = 6 }
+    }
+  }
+};
+
+// In the run request:
+// data_source = new { ..., source = inlineSource }
+```
+
+# [JavaScript/TypeScript](#tab/javascript)
+
+```typescript
+const inlineSource = {
+  type: "inline_user_conversation_simulation",
+  test_cases: [
+    {
+      test_case_id: "refund-delay",
+      test_case_description:
+        "A frustrated customer wants an update on a delayed refund.",
+      simulation_configuration: {
+        desired_num_turns: 6,
+      },
+    },
+  ],
+};
+
+// In the run request:
+// data_source: { ...dataSource, source: inlineSource }
+```
+
+# [cURL](#tab/curl)
+
+```json
+{
+  "source": {
+    "type": "inline_user_conversation_simulation",
+    "test_cases": [
+      {
+        "test_case_id": "refund-delay",
+        "test_case_description": "A frustrated customer wants an update on a delayed refund.",
+        "simulation_configuration": {
+          "desired_num_turns": 6
+        }
+      }
+    ]
+  }
+}
+```
+
+---
+
+## Get generated conversations
+
+Poll the run until it reaches a terminal state as described in [Get cloud evaluation results](cloud-evaluation-results.md). When `enable_conversation_dataset_generation` is `true`, a completed run includes an `output_datasets` entry like this one:
+
+```json
+{
+  "type": "simulated_user_conversations",
+  "dataset": {
+    "id": "dataset_123",
+    "name": "support-simulations",
+    "version": "1"
+  }
+}
+```
+
+Use the returned dataset `id`, `name`, and `version` to retrieve or reuse the generated conversations. If dataset generation is disabled, `output_datasets` is omitted.
 
 ---
 
